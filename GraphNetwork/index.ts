@@ -12,6 +12,14 @@ export type GraphNode<T> = {
     data: T;
 }
 
+export type TNodeGraphML = {
+    label: string;
+    shape: "rectangle" | "hexagon" | "ellipse" | "roundrectangle"
+}
+export type TEdgeGraphML = {
+    label: string;
+}
+
 export type GraphType = string | number | boolean;
 
 export class GraphNetwork<TNode, TEdge> {
