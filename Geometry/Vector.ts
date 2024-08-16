@@ -3,6 +3,7 @@ import { Matrix } from "./Matrix";
 const vectorElements = "xyzwabcdefgh";
 export type Axies = "x" | "y" | "z" | "w" | "a" | "b" | "c" | "d" | "e" | "f" | "g" | "h";
 
+
 /**
  * Represents a mathematical vector of variable size.
  */
@@ -375,6 +376,14 @@ export class Vector {
 	 */
 	abs(): Vector {
 		return new Vector(...this.values.map((e) => Math.abs(e)));
+	}
+
+	distanceTo(other: Vector){
+		return this.minus(other).length();
+	}
+
+	distanceSquared(other: Vector){
+		return this.minus(other).lengthSqrt();
 	}
 
 	/**

@@ -1,8 +1,8 @@
 import { Axies, Vector } from "./Vector";
 
-export function HashVec3(vec: Vector) {
+export function HashVector(vec: Vector): string {
 	const n = 46340;
-	return vec.x + vec.y * n + vec.z * n * n;
+	return `${vec.x + vec.y * n + vec.z * n * n}`;
 }
 export function WrapVector(vec: Vector, min: Vector, size: Vector) {
 	return vec.minus(min).modulus(size).plus(size).modulus(size).plus(min);
@@ -55,112 +55,6 @@ export const ASCII_GRADIENT_FULL =
 	` .-':_,^=;><+!rc*/z?sLTv)J7(|Fi{C}fI31tlu[neoZ5Yxjya]2ESwqkP6h9d4VpOGbUAKXHm8RD#$Bg0MNWQ%&@` as const;
 export const ASCII_GRADIENT_SHORT10 = ` .:-=+*#%@` as const;
 
-/**
-Stores an array of numbers in multiple dimensions, and has utility function for manipulating them. (it can also be an array of any, but it's not recommended unless you know what you're doing)
-@deprecated Use DynamicGrid3D instead
-*/
-export class Grid3D {
-	private grid: any[][][];
-	private width: number;
-	private height: number;
-	private length: number;
-
-	// height   width   length
-	// y        x       z
-
-	constructor(width: number, height: number, length: number) {
-		this.width = width;
-		this.length = length;
-		this.height = height;
-
-		this.grid = this.createGrid(width, height, length);
-	}
-
-	createGrid(width: number, height: number, length: number) {
-		const grid = [];
-		for (let y = 0; y < height; y++) {
-			grid[y] = [];
-			for (let x = 0; x < width; x++) {
-				grid[y][x] = new Array(length).fill(0);
-			}
-		}
-		return grid;
-	}
-
-	forEach(func: (val: any, pos: Vector, grid: Grid3D) => void) {
-		for (let y = 0; y < this.grid.length; y++) {
-			for (let x = 0; x < this.grid[y].length; x++) {
-				for (let z = 0; z < this.grid[y][x].length; z++) {
-					func(this.grid[y][x][z], new Vector(x, y, z), this);
-				}
-			}
-		}
-
-		return this;
-	}
-
-	isInside(pos: Vector) {
-		return (
-			this.width > pos.x && // x
-			0 <= pos.x &&
-			this.height > pos.y && // y
-			0 <= pos.y &&
-			this.length > pos.z && // z
-			0 <= pos.z
-		);
-	}
-	getValue(pos: Vector): any | null {
-		if (!this.isInside(pos)) return null;
-		return this.grid[pos.y][pos.x][pos.z];
-	}
-	setValue(pos: Vector, value: any) {
-		if (value == null) return this;
-		if (!this.isInside(pos)) return this;
-		this.grid[pos.y][pos.x][pos.z] = value;
-		return this;
-	}
-	/**
-	 * Clockwise from the top most tile, 8 of them.
-	 * @param pos
-	 */
-	getNeighbours(pos: Vector, neighbourLookupTable: readonly Vector[]) {
-		return neighbourLookupTable.map((e) => this.getValue(pos.plus(e)));
-	}
-
-	clone() {
-		return new Grid3D(this.width, this.height, this.length).forEach((e, p, g) => {
-			g.setValue(p, this.getValue(p));
-		});
-	}
-
-	printf(y: number, replacements: string[] = null) {
-		if (replacements)
-			console.log(this.grid[y].map((a) => a.map((b) => replacements[b % replacements.length]).join("")).join("\n"));
-		else console.log(this.grid[y].map((a) => a.join("")).join("\n"));
-	}
-
-	expand(values: Vector) {
-		const new_width = this.width + values.x * 2;
-		const new_height = this.height + values.y * 2;
-		const new_length = this.length + values.z * 2;
-
-		const new_grid = this.createGrid(new_width, new_height, new_length);
-
-		this.forEach((v, pos, g) => {
-			const p = pos.plus(values);
-			new_grid[p.y][p.x][p.z] = v;
-		});
-
-		this.grid = new_grid;
-
-		this.width = new_width;
-		this.height = new_height;
-		this.length = new_length;
-
-		return this;
-	}
-}
-
 export class DynamicGrid3D<T> {
 	private grid: { [vechash: string]: T };
 	private min: Vector;
@@ -169,6 +63,12 @@ export class DynamicGrid3D<T> {
 	private defaultElement: T;
 
 	private doesWrap: boolean;
+	private cloningFunction?: (value: T) => T;
+
+	cloneValue(value?: T) {
+		if (value === undefined) return undefined;
+		return this.cloningFunction ? this.cloningFunction(value) : value;
+	}
 
 	// height   width   length
 	// y        x       z
@@ -181,6 +81,7 @@ export class DynamicGrid3D<T> {
 		this.defaultElement = defaultElement;
 		this.grid = {};
 		this.doesWrap = false;
+		this.cloningFunction = undefined;
 	}
 
 	static fromMatrix<T>(values: T[][], defaultValue: T = undefined) {
@@ -232,6 +133,11 @@ export class DynamicGrid3D<T> {
 	//#region Get and Settings
 	setWrapping(value: boolean) {
 		this.doesWrap = value;
+		return this;
+	}
+	setValueCloningFunction(func: (value: T) => T) {
+		if (this.cloningFunction) throw new Error("You've already defined a cloning function for this grid!");
+		this.cloningFunction = func;
 		return this;
 	}
 
@@ -365,15 +271,15 @@ export class DynamicGrid3D<T> {
 	}
 	getValue(pos: Vector): T {
 		if (this.doesWrap && !this.isInside(pos)) pos = WrapVector(pos, this.min, this.getSize());
-		return this.grid[HashVec3(pos)] ?? this.defaultElement;
+		return this.grid[HashVector(pos)] ?? this.defaultElement;
 	}
 	getValueT<t>(pos: Vector): t {
 		return this.getValue(pos) as any;
 	}
 	deletePoint(pos: Vector) {
 		if (this.doesWrap && !this.isInside(pos)) pos = WrapVector(pos, this.min, this.getSize());
-		const value = this.grid[HashVec3(pos)];
-		delete this.grid[HashVec3(pos)];
+		const value = this.grid[HashVector(pos)];
+		delete this.grid[HashVector(pos)];
 		return value;
 	}
 	setValue(pos: Vector, value: T) {
@@ -388,17 +294,13 @@ export class DynamicGrid3D<T> {
 			this.min = this.min.min(pos);
 		}
 		if (value == undefined) return this;
-		this.grid[HashVec3(pos)] = value;
+		this.grid[HashVector(pos)] = this.cloneValue(value);
 		return this;
 	}
 	setValues(pos1: Vector, pos2: Vector, value: T) {
 		this.forVolume(pos1, pos2, (v, pos) => this.setValue(pos, value));
 		return this;
 	}
-	/**
-	 * Clockwise from the top most tile, 8 of them.
-	 * @param pos
-	 */
 	getNeighbours(pos: Vector, neighbourLookupTable: readonly Vector[]) {
 		return neighbourLookupTable.map((e) => this.getValue(pos.plus(e)));
 	}
@@ -468,7 +370,7 @@ export class DynamicGrid3D<T> {
 		const max = this.getMax();
 
 		this.forVolume(min, max, (_, p) => {
-			const value = gridCopy[HashVec3(p)];
+			const value = gridCopy[HashVector(p)];
 			if (value === undefined || value === this.defaultElement) return;
 			this.setValue(func(p), value);
 		});
@@ -577,7 +479,6 @@ export class DynamicGrid3D<T> {
 		result.reverse();
 
 		if (pretty) {
-			// if (!replacements) replacements = ASCII_GRADIENT_FULL.split("").map(e => e + e)
 			if (replacements) result = result.map((a) => a.map((b) => replacements[b] ?? b.padEnd(2, b[0])));
 
 			console.log(` -----> x+`);
