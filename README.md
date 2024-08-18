@@ -1,1 +1,1 @@
-This is where I keep a bunch of private utilities for my projects
+This is where I keep a bunch of utilities for my projects.
