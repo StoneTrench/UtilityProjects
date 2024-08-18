@@ -76,6 +76,6 @@ export class WebImageServer {
 
 	sendImageToClients(image_png: Buffer){
 		this.currentImage = image_png;
-		this.updateClientsImage();
+		return this.updateClientsImage();
 	}
 }
