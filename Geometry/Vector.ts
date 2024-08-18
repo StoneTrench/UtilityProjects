@@ -1,13 +1,13 @@
-import { Matrix } from "./Matrix";
+import { IArrayLikeMapping, MapFunction, IArrayLikeHelper, ForEachFunction, BreakPredicateFunction, SHOULD_BREAK } from "./IArrayFunctions";
+import Matrix from "./Matrix";
 
 const vectorElements = "xyzwabcdefgh";
 export type Axies = "x" | "y" | "z" | "w" | "a" | "b" | "c" | "d" | "e" | "f" | "g" | "h";
 
-
 /**
  * Represents a mathematical vector of variable size.
  */
-export class Vector {
+export default class Vector implements IArrayLikeMapping<number, number> {
 	/**
 	 * The dimensions of the vector. How many values it has.
 	 */
@@ -108,11 +108,22 @@ export class Vector {
 	}
 
 	/**
+	 * Sets a value of the vector.
+	 * @param index - The index to write the value to.
+	 * @param value - A value to assign to the vector.
+	 * @returns This vector with updated values.
+	 */
+	set(index: number, value: number): this {
+		this.values[index] = value;
+		return this;
+	}
+
+	/**
 	 * Sets the values of the vector.
 	 * @param values - An array of values to assign to the vector.
 	 * @returns This vector with updated values.
 	 */
-	set(values: number[]): this {
+	update(values: number[]): this {
 		this.values = [];
 		this.size = values.length;
 		for (let i = 0; i < this.size; i++) this.values.push(values[i]);
@@ -125,7 +136,7 @@ export class Vector {
 	 * @returns This vector with the result of the addition.
 	 */
 	add(other: Vector): this {
-		return this.set(this.values.map((e, i) => e + other.get(i)));
+		return this.update(this.values.map((e, i) => e + other.get(i)));
 	}
 
 	/**
@@ -143,7 +154,7 @@ export class Vector {
 	 * @returns This vector with the result of the subtraction.
 	 */
 	subtract(other: Vector): this {
-		return this.set(this.values.map((e, i) => e - other.get(i)));
+		return this.update(this.values.map((e, i) => e - other.get(i)));
 	}
 
 	/**
@@ -161,7 +172,7 @@ export class Vector {
 	 * @returns This vector scaled by the scalar value.
 	 */
 	scale(scalar: number): this {
-		return this.set(this.values.map((e, i) => e * scalar));
+		return this.update(this.values.map((e, i) => e * scalar));
 	}
 
 	/**
@@ -191,7 +202,7 @@ export class Vector {
 	cross(other: Vector): Vector {
 		if (this.size != 3 || other.size != 3)
 			throw new Error("Vectors with sizes other than 3 or 7 have no cross product (no 7D implemented)");
-		return new Vector().set(
+		return new Vector().update(
 			this.values.map((e, i) => {
 				const i1 = (i + 1) % 3;
 				const i2 = (i + 2) % 3;
@@ -238,7 +249,7 @@ export class Vector {
 	 * @param matrix - The matrix to multiply with.
 	 * @returns The resulting matrix.
 	 */
-	multMatrix(matrix: Matrix): Matrix {
+	multMatrix(matrix: Matrix): Matrix | undefined {
 		return matrix.multiplied(new Matrix(this.size, 1, this.values));
 	}
 	/**
@@ -247,7 +258,7 @@ export class Vector {
 	 * @returns This vector translated by the given values.
 	 */
 	translate(...args: number[]): this {
-		return this.set(this.values.map((e, i) => e + (args[i] ?? 0)));
+		return this.update(this.values.map((e, i) => e + (args[i] ?? 0)));
 	}
 
 	/**
@@ -264,7 +275,7 @@ export class Vector {
 	 * @returns This vector with each component floored.
 	 */
 	floor(): this {
-		return this.set(this.values.map((e) => Math.floor(e)));
+		return this.update(this.values.map((e) => Math.floor(e)));
 	}
 
 	/**
@@ -280,7 +291,7 @@ export class Vector {
 	 * @returns This vector with each component ceiled.
 	 */
 	ceil(): this {
-		return this.set(this.values.map((e) => Math.ceil(e)));
+		return this.update(this.values.map((e) => Math.ceil(e)));
 	}
 
 	/**
@@ -296,7 +307,7 @@ export class Vector {
 	 * @returns This vector with each component rounded.
 	 */
 	round(): this {
-		return this.set(this.values.map((e) => Math.round(e)));
+		return this.update(this.values.map((e) => Math.round(e)));
 	}
 
 	/**
@@ -313,7 +324,7 @@ export class Vector {
 	 * @returns This vector after component-wise multiplication.
 	 */
 	multiply(other: Vector): this {
-		return this.set(this.values.map((e, i) => e * other.get(i)));
+		return this.update(this.values.map((e, i) => e * other.get(i)));
 	}
 
 	/**
@@ -331,7 +342,7 @@ export class Vector {
 	 * @returns This vector after component-wise division.
 	 */
 	divide(other: Vector): this {
-		return this.set(this.values.map((e, i) => e / other.get(i)));
+		return this.update(this.values.map((e, i) => e / other.get(i)));
 	}
 
 	/**
@@ -378,12 +389,19 @@ export class Vector {
 		return new Vector(...this.values.map((e) => Math.abs(e)));
 	}
 
-	distanceTo(other: Vector){
+	distanceTo(other: Vector) {
 		return this.minus(other).length();
 	}
 
-	distanceSquared(other: Vector){
+	distanceSquared(other: Vector) {
 		return this.minus(other).lengthSqrt();
+	}
+
+	projectedOnto(other: Vector) {
+		return other.scaled(this.dot(other) / other.dot(other));
+	}
+	rejectOnto(other: Vector) {
+		return this.minus(this.projectedOnto(other));
 	}
 
 	/**
@@ -400,7 +418,27 @@ export class Vector {
 	 * @param args - The components of the vector.
 	 */
 	constructor(...args: number[]) {
-		this.set([...args]);
+		this.update([...args]);
+	}
+
+	mapClone<t>(func: MapFunction<number, number, t, this>) {
+		return new Vector(...this.values.map((a, b) => func(a, b, this) as number));
+	}
+	map<t>(func: MapFunction<number, number, t, this>): t[] {
+		return IArrayLikeHelper.Map(this, func);
+	}
+	forEach(func: ForEachFunction<number, number, this>): this {
+		for (let i = 0; i < this.values.length; i++) {
+			func(this.values[i], i, this);
+		}
+		return this;
+	}
+	forEachBreak(func: BreakPredicateFunction<number, number, this>): number | undefined {
+		for (let i = 0; i < this.values.length; i++) {
+			const value = this.values[i];
+			if (func(value, i, this) == SHOULD_BREAK.YES) return i;
+		}
+		return undefined;
 	}
 }
 

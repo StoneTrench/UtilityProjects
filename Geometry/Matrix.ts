@@ -2,18 +2,18 @@
 // i x j
 
 // m x n
-export class Matrix {
-    /**
-     * Column count.
-     */
+export default class Matrix {
+	/**
+	 * Column count.
+	 */
 	n: number;
-    /**
-     * Row count.
-     */
+	/**
+	 * Row count.
+	 */
 	m: number;
-    /**
-     * Flattened matrix values
-     */
+	/**
+	 * Flattened matrix values
+	 */
 	matrix: number[];
 
 	/**
@@ -22,10 +22,9 @@ export class Matrix {
 	 * @param n - The number of columns.
 	 * @param numbers - An optional array of matrix values. If not provided, initializes with zeros.
 	 */
-	constructor(m: number, n: number, numbers: number[] = undefined) {
+	constructor(m: number, n: number, numbers?: number[]) {
 		this.n = n;
 		this.m = m;
-		this.matrix = numbers;
 
 		if (numbers == undefined) {
 			this.matrix = [];
@@ -131,6 +130,7 @@ export class Matrix {
 		this.forEachBreak((v, i, j) => {
 			bol &&= callback(v, i, j);
 			if (bol == false) return true;
+			return false;
 		});
 		return bol;
 	}
@@ -145,6 +145,7 @@ export class Matrix {
 		this.forEachBreak((v, i, j) => {
 			bol ||= callback(v, i, j);
 			if (bol == true) return true;
+			return false;
 		});
 		return bol;
 	}
@@ -258,7 +259,7 @@ export class Matrix {
 				const A = this.getElement(0, j);
 				const Harbinger = this.getHarbinger(0, j);
 				const Minor = this.getMinorMatix(0, j);
-				result += A * Harbinger * Minor.determinant();
+				result += A * Harbinger * Minor.determinant()!;
 			}
 			return result;
 		} else return undefined;
@@ -285,7 +286,7 @@ export class Matrix {
 		let numbers = new Array(this.m * this.n);
 		for (let i = 0; i < this.m; i++) {
 			for (let j = 0; j < this.n; j++) {
-				numbers[j + i * this.n] = this.getMinorMatix(i, j).determinant() * this.getHarbinger(i, j);
+				numbers[j + i * this.n] = this.getMinorMatix(i, j).determinant()! * this.getHarbinger(i, j);
 			}
 		}
 		return new Matrix(this.m, this.n, numbers);
@@ -296,7 +297,7 @@ export class Matrix {
 	 * @returns The inverted matrix or undefined if the determinant is zero.
 	 */
 	invert() {
-		const Det = this.determinant();
+		const Det = this.determinant()!;
 		if (Det == 0) return undefined;
 		const DJI = this.adjugated().transposed();
 		return DJI.scale(1 / Det);
@@ -379,7 +380,7 @@ export class Matrix {
 				mx.setElement(i, j, b[i]);
 			}
 
-			result.push(mx.determinant() / det);
+			result.push(mx.determinant()! / det);
 		}
 
 		return result;
@@ -387,42 +388,42 @@ export class Matrix {
 }
 
 export function TestMatrix() {
-    function assert(condition: boolean, message: string) {
-        if (!condition) throw new Error(`Assertion failed: ${message}`);
-    }
-    console.log("Matrix testing started!")
+	function assert(condition: boolean, message: string) {
+		if (!condition) throw new Error(`Assertion failed: ${message}`);
+	}
+	console.log("Matrix testing started!");
 
-    // Test matrix creation
-    const matrix1 = new Matrix(2, 2, [1, 2, 3, 4]);
-    assert(matrix1.toString() === "2x2\n1\t2\t\n3\t4\t\n", "Matrix 1 creation failed");
+	// Test matrix creation
+	const matrix1 = new Matrix(2, 2, [1, 2, 3, 4]);
+	assert(matrix1.toString() === "2x2\n1\t2\t\n3\t4\t\n", "Matrix 1 creation failed");
 
-    const matrix2 = new Matrix(2, 2, [5, 6, 7, 8]);
-    assert(matrix2.toString() === "2x2\n5\t6\t\n7\t8\t\n", "Matrix 2 creation failed");
+	const matrix2 = new Matrix(2, 2, [5, 6, 7, 8]);
+	assert(matrix2.toString() === "2x2\n5\t6\t\n7\t8\t\n", "Matrix 2 creation failed");
 
-    // Test matrix addition
-    const sumMatrix = matrix1.plus(matrix2);
-    assert(sumMatrix?.toString() === "2x2\n6\t8\t\n10\t12\t\n", "Matrix addition failed");
+	// Test matrix addition
+	const sumMatrix = matrix1.plus(matrix2);
+	assert(sumMatrix?.toString() === "2x2\n6\t8\t\n10\t12\t\n", "Matrix addition failed");
 
-    // Test matrix multiplication
-    const multipliedMatrix = matrix1.multiplied(matrix2);
-    assert(multipliedMatrix?.toString() === "2x2\n19\t22\t\n43\t50\t\n", "Matrix multiplication failed");
+	// Test matrix multiplication
+	const multipliedMatrix = matrix1.multiplied(matrix2);
+	assert(multipliedMatrix?.toString() === "2x2\n19\t22\t\n43\t50\t\n", "Matrix multiplication failed");
 
-    // Test transpose
-    const transposedMatrix = matrix1.transposed();
-    assert(transposedMatrix.toString() === "2x2\n1\t3\t\n2\t4\t\n", "Matrix transposition failed");
+	// Test transpose
+	const transposedMatrix = matrix1.transposed();
+	assert(transposedMatrix.toString() === "2x2\n1\t3\t\n2\t4\t\n", "Matrix transposition failed");
 
-    // Test determinant
-    const determinant = matrix1.determinant();
-    assert(determinant === -2, "Matrix determinant failed");
+	// Test determinant
+	const determinant = matrix1.determinant();
+	assert(determinant === -2, "Matrix determinant failed");
 
-    // Test matrix inversion
-    const invertedMatrix = matrix1.invert();
-    const expectedInverted = "2x2\n-2\t1\t\n1.5\t-0.5\t\n";
-    assert(invertedMatrix?.toString() === expectedInverted, "Matrix inversion failed");
+	// Test matrix inversion
+	const invertedMatrix = matrix1.invert();
+	const expectedInverted = "2x2\n-2\t1\t\n1.5\t-0.5\t\n";
+	assert(invertedMatrix?.toString() === expectedInverted, "Matrix inversion failed");
 
-    // Test if matrix is identity
-    const identityMatrix = new Matrix(2, 2, [1, 0, 0, 1]);
-    assert(identityMatrix.isIdentity(), "Identity matrix check failed");
+	// Test if matrix is identity
+	const identityMatrix = new Matrix(2, 2, [1, 0, 0, 1]);
+	assert(identityMatrix.isIdentity(), "Identity matrix check failed");
 
-    console.log("Matrix testing finished!")
+	console.log("Matrix testing finished!");
 }

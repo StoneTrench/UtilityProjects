@@ -1,5 +1,5 @@
 {
-  "name": "geometry",
+  "name": "web-renderer",
   "version": "1.0.0",
   "main": "index.ts",
   "scripts": {
@@ -7,5 +7,11 @@
   },
   "author": "",
   "license": "ISC",
-  "description": ""
+  "description": "",
+  "devDependencies": {
+    "@types/node": "^22.4.0"
+  },
+  "dependencies": {
+    "canvas": "^2.11.2"
+  }
 }

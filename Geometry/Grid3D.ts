@@ -1,4 +1,6 @@
-import { Axies, Vector } from "./Vector";
+import { IArrayLikeSearch, IArrayLikeExtras, SHOULD_BREAK, IArrayLikeHelper, IArrayLikeMapping } from "./IArrayFunctions";
+import { WrapVector } from "./MathUtils";
+import Vector, { Axies } from "./Vector";
 
 /**
  * Generates a unique hash string for a given 3D vector.
@@ -10,18 +12,6 @@ import { Axies, Vector } from "./Vector";
 export function HashVector(vec: Vector): string {
 	const n = 46340;
 	return `${vec.x + vec.y * n + vec.z * n * n}`;
-}
-
-/**
- * Wraps a vector within a defined range, ensuring it stays within the minimum and maximum boundaries.
- *
- * @param vec - The vector to wrap.
- * @param min - The minimum boundary vector.
- * @param size - The size vector, representing the maximum boundary.
- * @returns A new vector wrapped within the specified range.
- */
-export function WrapVector(vec: Vector, min: Vector, size: Vector): Vector {
-	return vec.minus(min).modulus(size).plus(size).modulus(size).plus(min);
 }
 
 /**
@@ -95,12 +85,17 @@ export const ASCII_GRADIENT_SHORT10 = ` .:-=+*#%@` as const;
  *
  * @template T - The type of elements stored in the grid.
  */
-export class DynamicGrid3D<T> {
+export default class Grid<T>
+	implements
+		IArrayLikeMapping<T | undefined, Vector>,
+		IArrayLikeSearch<T | undefined, Vector>,
+		IArrayLikeExtras<T | undefined, Vector>
+{
 	private grid: { [vechash: string]: T };
 	private min: Vector;
 	private max: Vector;
 	private firstElement: boolean;
-	private defaultElement: T;
+	private defaultElement: T | undefined;
 	private doesWrap: boolean;
 	private cloningFunction?: (value: T) => T;
 
@@ -115,12 +110,13 @@ export class DynamicGrid3D<T> {
 		return this.cloningFunction ? this.cloningFunction(value) : value;
 	}
 
+	//#region Create
 	/**
 	 * Creates an instance of DynamicGrid3D with a specified default element.
 	 *
 	 * @param defaultElement - The default element used for uninitialized grid points.
 	 */
-	constructor(defaultElement: T) {
+	constructor(defaultElement?: T) {
 		this.min = new Vector(0, 0, 0);
 		this.max = new Vector(0, 0, 0);
 		this.firstElement = true;
@@ -138,11 +134,11 @@ export class DynamicGrid3D<T> {
 	 * @param defaultValue - The default value for uninitialized grid points.
 	 * @returns A new DynamicGrid3D instance with the mapped values.
 	 */
-	static fromMatrix<T>(values: T[][], defaultValue: T = undefined): DynamicGrid3D<T> {
-		return new DynamicGrid3D<T>(defaultValue).forVolume(
+	static fromMatrix<T>(values: T[][], defaultValue?: T): Grid<T> {
+		return new Grid<T>(defaultValue).forVolume(
 			new Vector(0, 0, 0),
 			new Vector(values.length - 1, 0, values[0].length - 1),
-			(v, p, g) => g.setValue(p, values[p.x][p.z])
+			(v, p, g) => g.set(p, values[p.x][p.z])
 		);
 	}
 
@@ -153,11 +149,11 @@ export class DynamicGrid3D<T> {
 	 * @param defaultValue - The default value for uninitialized grid points.
 	 * @returns A new DynamicGrid3D instance with the mapped values.
 	 */
-	static fromStringArray(values: string[], defaultValue: string = undefined): DynamicGrid3D<string> {
-		return new DynamicGrid3D<string>(defaultValue).forVolume(
+	static fromStringArray(values: string[], defaultValue?: string): Grid<string> {
+		return new Grid<string>(defaultValue).forVolume(
 			new Vector(0, 0, 0),
 			new Vector(values[0].length - 1, 0, values.length - 1),
-			(v, p, g) => g.setValue(p, values[p.z][p.x])
+			(v, p, g) => g.set(p, values[p.z][p.x])
 		);
 	}
 
@@ -261,6 +257,39 @@ export class DynamicGrid3D<T> {
 	//#region ForEach
 
 	/**
+	 * Gets the value at the specified position.
+	 * If wrapping is enabled and the position is outside the bounds, the position is wrapped.
+	 * @param {Vector} pos - The position to get the value from.
+	 * @returns {T} - Returns the value at the position, or the default element if undefined.
+	 */
+	get(pos: Vector) {
+		if (this.doesWrap && !this.isInside(pos)) pos = WrapVector(pos, this.min, this.getSize());
+		return this.grid[HashVector(pos)] ?? this.defaultElement;
+	}
+	/**
+	 * Sets the value at the specified position.
+	 * Updates the bounds of the grid accordingly.
+	 * @param {Vector} pos - The position to set the value at.
+	 * @param {T} value - The value to set.
+	 * @returns {Grid<T>} - Returns the updated grid.
+	 * @throws Will throw an error if the value is undefined.
+	 */
+	set(pos: Vector, value?: T): this {
+		if (value == undefined) throw new Error("Value was undefined!");
+		if (this.doesWrap && !this.isInside(pos)) pos = WrapVector(pos, this.min, this.getSize());
+		if (this.firstElement) {
+			this.firstElement = false;
+			this.min = pos.clone();
+			this.max = pos.clone();
+		} else {
+			this.max = this.max.max(pos);
+			this.min = this.min.min(pos);
+		}
+		if (value == undefined) return this;
+		this.grid[HashVector(pos)] = this.cloneValue(value)!;
+		return this;
+	}
+	/**
 	 * Iterates over each element in the grid, executing the provided function for each.
 	 * @param func - The function to be executed for each element, receiving value, position, and grid as arguments.
 	 * @returns The grid instance.
@@ -270,11 +299,35 @@ export class DynamicGrid3D<T> {
 			for (let y = this.min.y; y <= this.max.y; y++) {
 				for (let z = this.min.z; z <= this.max.z; z++) {
 					const pos = new Vector(x, y, z);
-					func(this.getValue(pos), pos, this);
+					func(this.get(pos)!, pos, this);
 				}
 			}
 		}
 		return this;
+	}
+	forEachBreak(predicate: (value: T, pos: Vector, grid: this) => SHOULD_BREAK) {
+		for (let x = this.min.x; x <= this.max.x; x++) {
+			for (let y = this.min.y; y <= this.max.y; y++) {
+				for (let z = this.min.z; z <= this.max.z; z++) {
+					const pos = new Vector(x, y, z);
+					if (predicate(this.get(pos)!, pos, this) == SHOULD_BREAK.YES) return pos;
+				}
+			}
+		}
+		return undefined;
+	}
+
+	/**
+	 * Maps the grid's values to a new grid using the provided function.
+	 * @param func - A function to map each value to a new type.
+	 * @param defaultValue - The default value for the new grid.
+	 * @returns A new grid with mapped values.
+	 */
+	mapClone<t>(func: (val: T, pos: Vector, grid: this) => t, defaultValue?: t) {
+		return IArrayLikeHelper.MapClone(this, new Grid<t>(defaultValue), func) as Grid<t>;
+	}
+	map<t>(func: (val: T, pos: Vector, grid: this) => t, defaultValue?: t) {
+		return IArrayLikeHelper.Map(this, func);
 	}
 
 	/**
@@ -282,16 +335,36 @@ export class DynamicGrid3D<T> {
 	 * @param predicate - The function to test each value and position.
 	 * @returns A tuple containing the value and position, or undefined if not found.
 	 */
-	find(predicate: (value: T, pos: Vector, grid: this) => boolean): [T, Vector] | undefined {
-		for (let x = this.min.x; x <= this.max.x; x++) {
-			for (let y = this.min.y; y <= this.max.y; y++) {
-				for (let z = this.min.z; z <= this.max.z; z++) {
-					const pos = new Vector(x, y, z);
-					if (predicate(this.getValue(pos), pos, this)) return [this.getValue(pos), pos];
-				}
-			}
-		}
-		return undefined;
+	find(predicate: (value: T, pos: Vector, grid: this) => boolean) {
+		return IArrayLikeHelper.Find(this, predicate);
+	}
+	findElement(predicate: (value: T, pos: Vector, grid: this) => boolean) {
+		return IArrayLikeHelper.FindElement(this, predicate);
+	}
+	findIndex(predicate: (value: T, pos: Vector, grid: this) => boolean) {
+		return IArrayLikeHelper.FindIndex(this, predicate);
+	}
+
+	/**
+	 * Gets the value at the specified position with a specific type.
+	 * @template t
+	 * @param {Vector} pos - The position to get the value from.
+	 * @returns {t} - Returns the value at the position, casted to the specified type.
+	 */
+	getT<t>(pos: Vector): t {
+		return this.get(pos) as any;
+	}
+	/**
+	 * Deletes the point at the specified position.
+	 * If wrapping is enabled and the position is outside the bounds, the position is wrapped.
+	 * @param {Vector} pos - The position of the point to delete.
+	 * @returns {T} - Returns the value of the deleted point.
+	 */
+	deleteAt(pos: Vector): T {
+		if (this.doesWrap && !this.isInside(pos)) pos = WrapVector(pos, this.min, this.getSize());
+		const value = this.grid[HashVector(pos)];
+		delete this.grid[HashVector(pos)];
+		return value;
 	}
 
 	/**
@@ -309,25 +382,12 @@ export class DynamicGrid3D<T> {
 			for (let y = min.y; y <= max.y; y++) {
 				for (let z = min.z; z <= max.z; z++) {
 					const pos = new Vector(x, y, z);
-					func(this.getValue(pos), pos, this);
+					func(this.get(pos)!, pos, this);
 				}
 			}
 		}
 		return this;
 	}
-
-	/**
-	 * Maps the grid's values to a new grid using the provided function.
-	 * @param func - A function to map each value to a new type.
-	 * @param defaultValue - The default value for the new grid.
-	 * @returns A new grid with mapped values.
-	 */
-	map<t>(func: (val: T, pos: Vector, grid: this) => t, defaultValue: t = undefined): DynamicGrid3D<t> {
-		const result = new DynamicGrid3D<t>(defaultValue);
-		this.forEach((v, p, g) => result.setValue(p, func(v, p, g)));
-		return result;
-	}
-
 	/**
 	 * Iterates over subgrids of the specified size, applying a callback to each subgrid.
 	 * @param size - The size of the subgrid.
@@ -351,7 +411,7 @@ export class DynamicGrid3D<T> {
 						for (let iz = 0; iz < size.z; iz++) {
 							for (let ix = 0; ix < size.x; ix++) {
 								const self_pos = scaled_pos.offset(ix, iy, iz);
-								values.push(this.getValue(self_pos));
+								values.push(this.get(self_pos)!);
 								poss.push(self_pos);
 							}
 						}
@@ -395,72 +455,14 @@ export class DynamicGrid3D<T> {
 	}
 
 	/**
-	 * Gets the value at the specified position.
-	 * If wrapping is enabled and the position is outside the bounds, the position is wrapped.
-	 * @param {Vector} pos - The position to get the value from.
-	 * @returns {T} - Returns the value at the position, or the default element if undefined.
-	 */
-	getValue(pos: Vector): T {
-		if (this.doesWrap && !this.isInside(pos)) pos = WrapVector(pos, this.min, this.getSize());
-		return this.grid[HashVector(pos)] ?? this.defaultElement;
-	}
-
-	/**
-	 * Gets the value at the specified position with a specific type.
-	 * @template t
-	 * @param {Vector} pos - The position to get the value from.
-	 * @returns {t} - Returns the value at the position, casted to the specified type.
-	 */
-	getValueT<t>(pos: Vector): t {
-		return this.getValue(pos) as any;
-	}
-
-	/**
-	 * Deletes the point at the specified position.
-	 * If wrapping is enabled and the position is outside the bounds, the position is wrapped.
-	 * @param {Vector} pos - The position of the point to delete.
-	 * @returns {T} - Returns the value of the deleted point.
-	 */
-	deletePoint(pos: Vector) {
-		if (this.doesWrap && !this.isInside(pos)) pos = WrapVector(pos, this.min, this.getSize());
-		const value = this.grid[HashVector(pos)];
-		delete this.grid[HashVector(pos)];
-		return value;
-	}
-
-	/**
-	 * Sets the value at the specified position.
-	 * Updates the bounds of the grid accordingly.
-	 * @param {Vector} pos - The position to set the value at.
-	 * @param {T} value - The value to set.
-	 * @returns {DynamicGrid3D<T>} - Returns the updated grid.
-	 * @throws Will throw an error if the value is undefined.
-	 */
-	setValue(pos: Vector, value: T) {
-		if (value == undefined) throw new Error("Value was undefined!");
-		if (this.doesWrap && !this.isInside(pos)) pos = WrapVector(pos, this.min, this.getSize());
-		if (this.firstElement) {
-			this.firstElement = false;
-			this.min = pos.clone();
-			this.max = pos.clone();
-		} else {
-			this.max = this.max.max(pos);
-			this.min = this.min.min(pos);
-		}
-		if (value == undefined) return this;
-		this.grid[HashVector(pos)] = this.cloneValue(value);
-		return this;
-	}
-
-	/**
 	 * Sets the value for all positions in a volume defined by two corner positions.
 	 * @param {Vector} pos1 - The first corner position of the volume.
 	 * @param {Vector} pos2 - The second corner position of the volume.
 	 * @param {T} value - The value to set for the volume.
-	 * @returns {DynamicGrid3D<T>} - Returns the updated grid.
+	 * @returns {Grid<T>} - Returns the updated grid.
 	 */
 	setValues(pos1: Vector, pos2: Vector, value: T) {
-		this.forVolume(pos1, pos2, (v, pos) => this.setValue(pos, value));
+		this.forVolume(pos1, pos2, (v, pos) => this.set(pos, value));
 		return this;
 	}
 
@@ -471,24 +473,24 @@ export class DynamicGrid3D<T> {
 	 * @returns {T[]} - Returns an array of neighboring values.
 	 */
 	getNeighbours(pos: Vector, neighbourLookupTable: readonly Vector[]) {
-		return neighbourLookupTable.map((e) => this.getValue(pos.plus(e)));
+		return neighbourLookupTable.map((e) => this.get(pos.plus(e)));
 	}
 
 	/**
 	 * Finds the index of a neighbor that matches a predicate.
 	 * @param {Vector} pos - The position to search neighbors from.
-	 * @param {(value: T, pos: Vector, grid: DynamicGrid3D<T>) => boolean} predicate - The function to match a neighbor.
+	 * @param {(value: T, pos: Vector, grid: Grid<T>) => boolean} predicate - The function to match a neighbor.
 	 * @param {readonly Vector[]} neighbourLookupTable - The lookup table defining neighbor positions.
 	 * @returns {number} - Returns the index of the matching neighbor, or -1 if none match.
 	 */
 	findNeighbourIndex(
 		pos: Vector,
-		predicate: (value: T, pos: Vector, grid: DynamicGrid3D<T>) => boolean,
+		predicate: (value: T, pos: Vector, grid: Grid<T>) => boolean,
 		neighbourLookupTable: readonly Vector[]
 	) {
 		return neighbourLookupTable.findIndex((e) => {
 			const npos = pos.plus(e);
-			return predicate(this.getValue(npos), npos, this);
+			return predicate(this.get(npos)!, npos, this);
 		});
 	}
 
@@ -497,22 +499,23 @@ export class DynamicGrid3D<T> {
 	 * @param {Vector} startingPoint - The point to start the flood fill from.
 	 * @param {T} value - The value to fill with.
 	 * @param {readonly Vector[]} neighbourLookupTable - The lookup table defining neighbor positions.
-	 * @returns {DynamicGrid3D<T>} - Returns the updated grid.
+	 * @returns {Grid<T>} - Returns the updated grid.
 	 */
 	floodfill(startingPoint: Vector, value: T, neighbourLookupTable: readonly Vector[]) {
-		const parentValue = this.getValue(startingPoint);
+		const parentValue = this.get(startingPoint);
 		if (parentValue == value) return this;
 
 		let points: Vector[] = [startingPoint];
 		while (points.length > 0) {
 			const current = points.pop();
-			this.setValue(current, value);
+			if (current == undefined) break;
+			this.set(current, value);
 
 			points.push(
 				...neighbourLookupTable
 					.map((e) => current.plus(e))
 					.filter((e) => this.isInside(e))
-					.filter((e) => this.getValue(e) == parentValue)
+					.filter((e) => this.get(e) == parentValue)
 			);
 		}
 
@@ -527,7 +530,7 @@ export class DynamicGrid3D<T> {
 	 * @returns {number} - The sum of the neighboring values.
 	 */
 	getNeighboursSum(pos: Vector, neighbourLookupTable: readonly Vector[]): number {
-		return neighbourLookupTable.reduce((res, e) => res + this.getValueT<number>(pos.plus(e)), 0);
+		return neighbourLookupTable.reduce((res, e) => res + this.getT<number>(pos.plus(e)), 0);
 	}
 
 	/**
@@ -548,19 +551,19 @@ export class DynamicGrid3D<T> {
 	 */
 	getGradient(pos: Vector, delta: number = 1) {
 		return new Vector(
-			((this.getValueT<number>(pos.offset(delta, 0, 0)) - this.getValueT<number>(pos)) as number) / delta,
-			((this.getValueT<number>(pos.offset(0, delta, 0)) - this.getValueT<number>(pos)) as number) / delta,
-			((this.getValueT<number>(pos.offset(0, 0, delta)) - this.getValueT<number>(pos)) as number) / delta
+			((this.getT<number>(pos.offset(delta, 0, 0)) - this.getT<number>(pos)) as number) / delta,
+			((this.getT<number>(pos.offset(0, delta, 0)) - this.getT<number>(pos)) as number) / delta,
+			((this.getT<number>(pos.offset(0, 0, delta)) - this.getT<number>(pos)) as number) / delta
 		);
 	}
 
 	/**
 	 * Calculates the normal vectors for each position in the grid based on neighboring values.
 	 * @param {readonly Vector[]} neighbourLookupTable - The lookup table defining neighbor positions.
-	 * @returns {DynamicGrid3D<Vector>} - A new grid with normal vectors for each position.
+	 * @returns {Grid<Vector>} - A new grid with normal vectors for each position.
 	 */
-	getNormals(neighbourLookupTable: readonly Vector[]): DynamicGrid3D<Vector> {
-		return this.map((v, p, g) =>
+	getNormals(neighbourLookupTable: readonly Vector[]) {
+		return this.mapClone((v, p, g) =>
 			v != 0
 				? this.getNeighbours(p, neighbourLookupTable)
 						.map((e, i) => [e, i])
@@ -577,7 +580,7 @@ export class DynamicGrid3D<T> {
 	/**
 	 * Applies a transformation function to each position in the grid.
 	 * @param {function(Vector): Vector} func - The function to apply to each position.
-	 * @returns {DynamicGrid3D<T>} - Returns the updated grid with transformed positions.
+	 * @returns {Grid<T>} - Returns the updated grid with transformed positions.
 	 */
 	alterGridPositions(func: (pos: Vector) => Vector) {
 		const gridCopy = this.grid;
@@ -590,7 +593,7 @@ export class DynamicGrid3D<T> {
 		this.forVolume(min, max, (_, p) => {
 			const value = gridCopy[HashVector(p)];
 			if (value === undefined || value === this.defaultElement) return;
-			this.setValue(func(p), value);
+			this.set(func(p), value);
 		});
 
 		return this;
@@ -598,7 +601,7 @@ export class DynamicGrid3D<T> {
 
 	/**
 	 * Realigns the grid positions so that the minimum position is at (0, 0, 0).
-	 * @returns {DynamicGrid3D<T>} - Returns the updated grid with realigned positions.
+	 * @returns {Grid<T>} - Returns the updated grid with realigned positions.
 	 */
 	realign() {
 		const min = this.getMin();
@@ -607,7 +610,7 @@ export class DynamicGrid3D<T> {
 
 	/**
 	 * Rotates the grid 90 degrees counter-clockwise around the Y-axis.
-	 * @returns {DynamicGrid3D<T>} - Returns the updated grid after rotation.
+	 * @returns {Grid<T>} - Returns the updated grid after rotation.
 	 */
 	rotateCCW_YAxis() {
 		return this.alterGridPositions((p) => new Vector(p.z, p.y, -p.x)).realign();
@@ -615,7 +618,7 @@ export class DynamicGrid3D<T> {
 
 	/**
 	 * Rotates the grid 90 degrees clockwise around the Y-axis.
-	 * @returns {DynamicGrid3D<T>} - Returns the updated grid after rotation.
+	 * @returns {Grid<T>} - Returns the updated grid after rotation.
 	 */
 	rotateCW_YAxis() {
 		return this.alterGridPositions((p) => new Vector(-p.z, p.y, p.x)).realign();
@@ -623,7 +626,7 @@ export class DynamicGrid3D<T> {
 
 	/**
 	 * Rotates the grid 180 degrees around the Y-axis.
-	 * @returns {DynamicGrid3D<T>} - Returns the updated grid after rotation.
+	 * @returns {Grid<T>} - Returns the updated grid after rotation.
 	 */
 	rotate180_YAxis() {
 		return this.alterGridPositions((p) => new Vector(-p.x, p.y, -p.z)).realign();
@@ -631,7 +634,7 @@ export class DynamicGrid3D<T> {
 
 	/**
 	 * Flips the grid along the X-axis.
-	 * @returns {DynamicGrid3D<T>} - Returns the updated grid after flipping.
+	 * @returns {Grid<T>} - Returns the updated grid after flipping.
 	 */
 	flipX_YAxis() {
 		const size = this.getSize().offset(-1, -1, -1);
@@ -640,7 +643,7 @@ export class DynamicGrid3D<T> {
 
 	/**
 	 * Flips the grid along the Z-axis.
-	 * @returns {DynamicGrid3D<T>} - Returns the updated grid after flipping.
+	 * @returns {Grid<T>} - Returns the updated grid after flipping.
 	 */
 	flipZ_YAxis() {
 		const size = this.getSize().offset(-1, -1, -1);
@@ -652,14 +655,14 @@ export class DynamicGrid3D<T> {
 
 	/**
 	 * Creates a deep copy of the grid.
-	 * @returns {DynamicGrid3D<T>} - A new grid that is a copy of the current grid.
+	 * @returns {Grid<T>} - A new grid that is a copy of the current grid.
 	 */
-	clone(): DynamicGrid3D<T> {
-		const result = new DynamicGrid3D<T>(this.defaultElement);
+	clone(): Grid<T> {
+		const result = new Grid<T>(this.defaultElement);
 		this.forEach((e, p, g) => {
-			const value = this.getValue(p);
+			const value = this.get(p);
 			if (value === this.defaultElement) return;
-			result.setValue(p, value);
+			result.set(p, value);
 		});
 		return result;
 	}
@@ -667,17 +670,17 @@ export class DynamicGrid3D<T> {
 	/**
 	 * Pastes another grid's values into this grid at the specified position.
 	 * @param {Vector} pos - The position to paste the other grid into.
-	 * @param {DynamicGrid3D<T>} other - The grid to paste from.
-	 * @returns {DynamicGrid3D<T>} - Returns the updated grid after pasting.
+	 * @param {Grid<T>} other - The grid to paste from.
+	 * @returns {Grid<T>} - Returns the updated grid after pasting.
 	 */
-	paste(pos: Vector, other: DynamicGrid3D<T>): DynamicGrid3D<T> {
+	paste(pos: Vector, other: Grid<T>): Grid<T> {
 		if (this.defaultElement === other.defaultElement) {
 			other.forEach((v, p, g) => {
-				if (v !== this.defaultElement) this.setValue(p.plus(pos), v);
+				if (v !== this.defaultElement) this.set(p.plus(pos), v);
 			});
 		} else {
 			other.forEach((v, p, g) => {
-				this.setValue(p.plus(pos), v);
+				this.set(p.plus(pos), v);
 			});
 		}
 		return this;
@@ -692,7 +695,7 @@ export class DynamicGrid3D<T> {
 	 * @returns {string} - The printed graph as a string.
 	 */
 	static printGraph(values: number[]) {
-		const graph = new DynamicGrid3D<string>(" .");
+		const graph = new Grid<string>(" .");
 
 		const min = Math.min(...values);
 		const max = Math.max(...values);
@@ -710,11 +713,11 @@ export class DynamicGrid3D<T> {
 
 			const zPos = Math.round(value * scale);
 
-			graph.setValue(new Vector(xPos, 0, zPos), "██");
+			graph.set(new Vector(xPos, 0, zPos), "██");
 			const axisIndex = `${i}`.padEnd(3).padStart(5);
 
 			for (let a = 0; a < axisIndex.length; a++) {
-				graph.setValue(new Vector(xPos, 0, -a - 1), axisIndex[a].padStart(2, " "));
+				graph.set(new Vector(xPos, 0, -a - 1), axisIndex[a].padStart(2, " "));
 			}
 		}
 
@@ -727,7 +730,7 @@ export class DynamicGrid3D<T> {
 			const textReverse = text.length - 1;
 
 			for (let a = 0; a < text.length; a++) {
-				graph.setValue(new Vector(-a - 1, 0, i), text[textReverse - a].padStart(2, " "));
+				graph.set(new Vector(-a - 1, 0, i), text[textReverse - a].padStart(2, " "));
 			}
 		}
 		return graph.print(0, true);
@@ -739,9 +742,9 @@ export class DynamicGrid3D<T> {
 	 * @param {boolean} [pretty=true] - Whether to print in a pretty format.
 	 * @param {string[]} [replacements=null] - Optional replacements for values in the grid.
 	 * @param {(v: T) => string} [stringify=(v: T) => `${v}`] - Function to convert values to strings.
-	 * @returns {DynamicGrid3D<T>} - Returns the grid after printing.
+	 * @returns {Grid<T>} - Returns the grid after printing.
 	 */
-	print(y: number, pretty: boolean = true, replacements: string[] = null, stringify: (v: T) => string = (v: T) => `${v}`) {
+	print(y: number, pretty: boolean = true, replacements?: string[], stringify: (v: T) => string = (v: T) => `${v}`) {
 		const min = this.getMin();
 		let result: string[][] = [];
 		this.forEach((v, p, g) => {
@@ -795,10 +798,10 @@ export class DynamicGrid3D<T> {
 
 	/**
 	 * Checks if this grid is equal to another grid.
-	 * @param {DynamicGrid3D<T>} other - The other grid to compare with.
+	 * @param {Grid<T>} other - The other grid to compare with.
 	 * @returns {boolean} - Returns true if the grids are equal, otherwise false.
 	 */
-	equals(other: DynamicGrid3D<T>) {
+	equals(other: Grid<T>) {
 		if (!this.getMin().equals(other.getMin())) return false;
 		if (!this.getMax().equals(other.getMax())) return false;
 		if (this.defaultElement != other.defaultElement) return false;
