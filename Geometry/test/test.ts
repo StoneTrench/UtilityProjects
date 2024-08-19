@@ -1,6 +1,8 @@
-import Polygon from "./Polygon";
-import { TestMatrix, TestVector } from "./Tests";
-import Vector from "./Vector";
+import Polygon from "../src/Polygon";
+
+import Vector from "../src/Vector";
+import { TestMatrix } from "./MatrixTest";
+import { TestVector } from "./VectorTest";
 
 TestMatrix();
 TestVector();
