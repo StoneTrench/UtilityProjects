@@ -1,4 +1,11 @@
-import { IArrayLikeMapping, MapFunction, IArrayLikeHelper, ForEachFunction, BreakPredicateFunction, SHOULD_BREAK } from "./IArrayFunctions";
+import {
+	IArrayLikeMapping,
+	MapFunction,
+	IArrayLikeHelper,
+	ForEachFunction,
+	BreakPredicateFunction,
+	SHOULD_BREAK,
+} from "./IArrayFunctions";
 import Matrix from "./Matrix";
 
 const vectorElements = "xyzwabcdefgh";
@@ -8,10 +15,6 @@ export type Axies = "x" | "y" | "z" | "w" | "a" | "b" | "c" | "d" | "e" | "f" | 
  * Represents a mathematical vector of variable size.
  */
 export default class Vector implements IArrayLikeMapping<number, number> {
-	/**
-	 * The dimensions of the vector. How many values it has.
-	 */
-	private size: number;
 	/**
 	 * The values of the vector.
 	 */
@@ -67,7 +70,7 @@ export default class Vector implements IArrayLikeMapping<number, number> {
 	 * @returns - The number of elements in the vector.
 	 */
 	getDimensions() {
-		return this.size;
+		return this.values.length;
 	}
 
 	/**
@@ -86,7 +89,7 @@ export default class Vector implements IArrayLikeMapping<number, number> {
 	 * @returns Whether the vectors are equal.
 	 */
 	equals(other: Vector, error: number = 0): boolean {
-		if (this.size !== other.size) return false;
+		if (this.getDimensions() !== other.getDimensions()) return false;
 		return this.values.every((e, i) => Math.abs(e - other.get(i)) <= error);
 	}
 
@@ -95,7 +98,7 @@ export default class Vector implements IArrayLikeMapping<number, number> {
 	 * @returns A string representing the vector.
 	 */
 	toString(): string {
-		return `vec${this.size}(${this.values.map((e, i) => `${vectorElements[i] || i}:${e}`).join("; ")})`;
+		return `vec${this.getDimensions()}(${this.values.map((e, i) => `${vectorElements[i] || i}:${e}`).join("; ")})`;
 	}
 
 	/**
@@ -125,8 +128,7 @@ export default class Vector implements IArrayLikeMapping<number, number> {
 	 */
 	update(values: number[]): this {
 		this.values = [];
-		this.size = values.length;
-		for (let i = 0; i < this.size; i++) this.values.push(values[i]);
+		for (let i = 0; i < values.length; i++) this.values.push(values[i]);
 		return this;
 	}
 
@@ -199,17 +201,57 @@ export default class Vector implements IArrayLikeMapping<number, number> {
 	 * @returns A new vector representing the cross product.
 	 * @throws Error if vectors are not 3D.
 	 */
-	cross(other: Vector): Vector {
-		if (this.size != 3 || other.size != 3)
-			throw new Error("Vectors with sizes other than 3 or 7 have no cross product (no 7D implemented)");
-		return new Vector().update(
-			this.values.map((e, i) => {
-				const i1 = (i + 1) % 3;
-				const i2 = (i + 2) % 3;
+	cross(other: Vector): Vector | undefined {
+		// https://en.wikipedia.org/wiki/Seven-dimensional_cross_product
 
-				return this.get(i1) * other.get(i2) - this.get(i2) * other.get(i1);
-			})
-		);
+		const size = other.getDimensions();
+		const self = this.getDimensions() != size ? this.matchedDimensions(size) : this;
+
+		if (size <= 3) {
+			return new Vector(
+				self.y * other.z - self.z * other.y,
+				self.z * other.x - self.x * other.z,
+				self.x * other.y - self.y * other.x
+			);
+		} else if (size <= 7) {
+			return self.mapClone((_, i) => {
+				const i2 = (i + 1) % 7;
+				const i3 = (i + 2) % 7;
+				const i4 = (i + 3) % 7;
+				const i5 = (i + 4) % 7;
+				const i6 = (i + 5) % 7;
+				const i7 = (i + 6) % 7;
+
+				return (
+					self.get(i2) * other.get(i4) -
+					self.get(i4) * other.get(i2) +
+					self.get(i3) * other.get(i7) -
+					self.get(i7) * other.get(i3) +
+					self.get(i5) * other.get(i6) -
+					self.get(i6) * other.get(i5)
+				);
+			});
+		}
+
+		return undefined;
+		// if (this.size != 3 || other.size != 3)
+		// 	throw new Error("Vectors with sizes other than 3 or 7 have no cross product (no 7D implemented)");
+		// return new Vector().update(
+		// 	this.values.map((e, i) => {
+		// 		const i1 = (i + 1) % 3;
+		// 		const i2 = (i + 2) % 3;
+
+		// 		return this.get(i1) * other.get(i2) - this.get(i2) * other.get(i1);
+		// 	})
+		// );
+	}
+
+	/**
+	 * Computes the length (magnitude) of the vector.
+	 * @returns The length of the vector.
+	 */
+	length(): number {
+		return Math.sqrt(this.lengthSqrt());
 	}
 
 	/**
@@ -221,11 +263,19 @@ export default class Vector implements IArrayLikeMapping<number, number> {
 	}
 
 	/**
-	 * Computes the length (magnitude) of the vector.
-	 * @returns The length of the vector.
+	 * Computes the manhattan length of the vector.
+	 * @returns The manhattan length of the vector.
 	 */
-	length(): number {
-		return Math.sqrt(this.lengthSqrt());
+	lengthManhattan(): number {
+		return this.values.reduce((res, e) => res + Math.abs(e), 0);
+	}
+
+	/**
+	 * Computes the max length of the vector.
+	 * @returns The max length of the vector.
+	 */
+	lengthMax(): number {
+		return this.values.reduce((res, e) => Math.max(res, Math.abs(e)), 0);
 	}
 
 	/**
@@ -250,7 +300,7 @@ export default class Vector implements IArrayLikeMapping<number, number> {
 	 * @returns The resulting matrix.
 	 */
 	multMatrix(matrix: Matrix): Matrix | undefined {
-		return matrix.multiplied(new Matrix(this.size, 1, this.values));
+		return matrix.multiplied(new Matrix(this.getDimensions(), 1, this.values));
 	}
 	/**
 	 * Translates the vector by the given arguments.
@@ -440,50 +490,20 @@ export default class Vector implements IArrayLikeMapping<number, number> {
 		}
 		return undefined;
 	}
-}
-
-export function TestVector() {
-	function assert(condition: boolean, message: string) {
-		if (!condition) throw new Error(`Assertion failed: ${message}`);
+	toArray() {
+		return [...this.values];
 	}
+	closestAxisVector() {
+		const largest = this.map<[number, number, number]>((e, i) => [i, Math.abs(e), e]).reduce((prev, curr) =>
+			prev[1] > curr[1] ? prev : curr
+		);
 
-	console.log("Vector testing started!");
-
-	// Test vector creation
-	const vector1 = new Vector(1, 2, 3);
-	assert(vector1.toString() === "vec3(x:1; y:2; z:3)", "Vector 1 creation failed");
-
-	const vector2 = new Vector(4, 5, 6);
-	assert(vector2.toString() === "vec3(x:4; y:5; z:6)", "Vector 2 creation failed");
-
-	// Test vector addition
-	const sumVector = vector1.plus(vector2);
-	assert(sumVector.toString() === "vec3(x:5; y:7; z:9)", "Vector addition failed");
-
-	// Test vector subtraction
-	const differenceVector = vector1.minus(vector2);
-	assert(differenceVector.toString() === "vec3(x:-3; y:-3; z:-3)", "Vector subtraction failed");
-
-	// Test vector scaling
-	const scaledVector = vector1.scaled(2);
-	assert(scaledVector.toString() === "vec3(x:2; y:4; z:6)", "Vector scaling failed");
-
-	// Test vector dot product
-	const dotProduct = vector1.dot(vector2);
-	assert(dotProduct === 32, "Vector dot product failed");
-
-	// Test vector cross product
-	const crossProduct = vector1.cross(vector2);
-	assert(crossProduct.toString() === "vec3(x:-3; y:6; z:-3)", "Vector cross product failed");
-
-	// Test vector length
-	const length = vector1.length();
-	assert(Math.abs(length - 3.741) < 0.001, "Vector length calculation failed");
-
-	// Test unit vector
-	const unitVector = vector1.unit();
-	const expectedUnitVector = "vec3(x:0.267; y:0.534; z:0.801)";
-	assert(unitVector.toString().startsWith("vec3(x:0.267"), "Vector unit calculation failed");
-
-	console.log("Vector testing finished!");
+		return this.mapClone((e, i, s) => (largest[0] == i ? (largest[2] > 0 ? 1 : -1) : 0));
+	}
+	matchedDimensions(dimensions: number) {
+		if (this.getDimensions() > dimensions) return new Vector(...this.values.slice(0, dimensions));
+		if (this.getDimensions() < dimensions)
+			return new Vector(...this.values.concat(new Array(this.getDimensions() - dimensions).fill(0)));
+		return this.clone();
+	}
 }

@@ -1,4 +1,4 @@
-import { IArrayLikeSearch, IArrayLikeExtras, SHOULD_BREAK, IArrayLikeHelper, IArrayLikeMapping } from "./IArrayFunctions";
+import { IArrayLikeSearch, IArrayLikeDelete, SHOULD_BREAK, IArrayLikeHelper, IArrayLikeMapping } from "./IArrayFunctions";
 import { WrapVector } from "./MathUtils";
 import Vector, { Axies } from "./Vector";
 
@@ -89,7 +89,7 @@ export default class Grid<T>
 	implements
 		IArrayLikeMapping<T | undefined, Vector>,
 		IArrayLikeSearch<T | undefined, Vector>,
-		IArrayLikeExtras<T | undefined, Vector>
+		IArrayLikeDelete<T | undefined, Vector>
 {
 	private grid: { [vechash: string]: T };
 	private min: Vector;

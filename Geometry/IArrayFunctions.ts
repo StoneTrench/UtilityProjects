@@ -16,8 +16,7 @@ export interface IArrayLike<Element, Index> {
 	set(index: Index, value: Element): this;
 }
 
-export interface IArrayLikeExtras<Element, Index> extends IArrayLike<Element, Index> {
-	getT<t>(index?: Index): t | undefined;
+export interface IArrayLikeDelete<Element, Index> extends IArrayLike<Element, Index> {
 	deleteAt(index?: Index): Element | undefined;
 }
 export interface IArrayLikeStack<Element, Index> extends IArrayLike<Element, Index> {
@@ -53,8 +52,8 @@ export interface IArrayLikeSearch<Element, Index> extends IArrayLikeLoop<Element
 	findIndex(predicate: PredicateFunction<Element, Index, this>): Index;
 }
 export namespace IArrayLikeHelper {
-	export function Reduce<T, I, t>(self: IArrayLikeFiltering<T, I>, result: t, func: ReduceFunction<T, I, t>) {
-		let accumulator = result;
+	export function Reduce<T, I, t>(self: IArrayLikeFiltering<T, I>, initialValue: t, func: ReduceFunction<T, I, t>) {
+		let accumulator = initialValue;
 
 		self.forEach((element, index, arr) => {
 			accumulator = func(accumulator, element, index, arr);
