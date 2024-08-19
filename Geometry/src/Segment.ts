@@ -1,4 +1,4 @@
-import Vector from "./Vector";
+import Vector from "./class/Vector";
 
 export namespace Segment {
 	export function Intersection2D(
@@ -8,12 +8,7 @@ export namespace Segment {
 		endB: Vector,
 		error: number = 0.05
 	): Vector | undefined {
-		if (
-			startA.equals(startB, error) ||
-			endA.equals(startB, error) ||
-			startA.equals(endB, error) ||
-			endA.equals(endB, error)
-		)
+		if (startA.equals(startB, error) || endA.equals(startB, error) || startA.equals(endB, error) || endA.equals(endB, error))
 			return undefined;
 
 		const errorMin = -error;
@@ -87,5 +82,41 @@ export namespace Segment {
 	}
 	export function IsLeftOfLine2D(line1: Vector, line2: Vector, point: Vector) {
 		return (line2.x - line1.x) * (point.y - line1.y) - (line2.y - line1.y) * (point.x - line1.x) > 0;
+	}
+	export function CutSegmentsAtIntersections2D(segments: [Vector, Vector][], error: number = 0.05) {
+		// const oldSegments = segments;
+		segments = [...segments];
+
+		const result: [Vector, Vector][] = [];
+
+		while (segments.length > 0) {
+			const seg = segments.shift();
+
+			let intersectionPoint: Vector = null;
+			let intersectionIndex: number = -1;
+
+			for (let otherI = 0; otherI < segments.length; otherI++) {
+				const intersection = Intersection2D(seg[0], seg[1], segments[otherI][0], segments[otherI][1], error);
+				if (!intersection) continue;
+				intersectionPoint = intersection;
+				intersectionIndex = otherI;
+				break;
+			}
+
+			if (intersectionPoint) {
+				const otherSegment = segments.splice(intersectionIndex, 1)[0];
+				if (!seg[0].equals(intersectionPoint, error)) segments.push([seg[0].clone(), intersectionPoint.clone()]);
+
+				if (!seg[1].equals(intersectionPoint, error)) segments.push([intersectionPoint.clone(), seg[1].clone()]);
+
+				if (!otherSegment[0].equals(intersectionPoint, error))
+					segments.push([otherSegment[0].clone(), intersectionPoint.clone()]);
+
+				if (!otherSegment[1].equals(intersectionPoint, error))
+					segments.push([intersectionPoint.clone(), otherSegment[1].clone()]);
+			} else result.push(seg);
+		}
+
+		return result;
 	}
 }

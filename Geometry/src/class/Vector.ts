@@ -5,7 +5,7 @@ import {
 	ForEachFunction,
 	BreakPredicateFunction,
 	SHOULD_BREAK,
-} from "./IArrayFunctions";
+} from "../IArrayFunctions";
 import Matrix from "./Matrix";
 
 const vectorElements = "xyzwabcdefgh";
@@ -98,7 +98,7 @@ export default class Vector implements IArrayLikeMapping<number, number> {
 	 * @returns A string representing the vector.
 	 */
 	toString(): string {
-		return `vec${this.getDimensions()}(${this.values.map((e, i) => `${vectorElements[i] || i}:${e}`).join("; ")})`;
+		return `Vec${this.getDimensions()}(${this.values.map((e, i) => `${e}`).join(", ")})`;
 	}
 
 	/**
@@ -503,7 +503,7 @@ export default class Vector implements IArrayLikeMapping<number, number> {
 	matchedDimensions(dimensions: number) {
 		if (this.getDimensions() > dimensions) return new Vector(...this.values.slice(0, dimensions));
 		if (this.getDimensions() < dimensions)
-			return new Vector(...this.values.concat(new Array(this.getDimensions() - dimensions).fill(0)));
+			return new Vector(...this.values.concat(new Array(dimensions - this.getDimensions()).fill(0)));
 		return this.clone();
 	}
 }

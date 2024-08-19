@@ -1,4 +1,4 @@
-import Matrix from "../src/Matrix";
+import Matrix from "../src/class/Matrix";
 
 export function TestMatrix() {
 	function assert(condition: boolean, message: string) {

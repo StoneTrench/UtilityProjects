@@ -1,4 +1,14 @@
 import { create } from "xmlbuilder2";
+import {
+	BreakPredicateFunction,
+	ForEachFunction,
+	IArrayLike,
+	IArrayLikeFiltering,
+	IArrayLikeHelper,
+	PredicateFunction,
+	ReduceFunction,
+	SHOULD_BREAK,
+} from "../IArrayFunctions";
 
 export type GraphEdge<T> = {
 	from: GraphSymbol;
@@ -6,10 +16,12 @@ export type GraphEdge<T> = {
 	data: T;
 };
 
-export type GraphNode<T> = {
+export type GraphNode<TNode, TEdge> = {
 	id: GraphSymbol;
 	type: GraphSymbol;
-	data: T;
+	data: TNode;
+	incoming: GraphEdge<TEdge>[];
+	outgoing: GraphEdge<TEdge>[];
 };
 
 export type TNodeGraphML = {
@@ -34,110 +46,138 @@ export type TEdgeGraphML = {
 
 export type GraphSymbol = string | number | boolean;
 
-export class Graph<TNode, TEdge> {
-	private nodes: Map<GraphSymbol, GraphNode<TNode>>;
-	private outgoingEdges: Map<GraphSymbol, GraphEdge<TEdge>[]>;
-	private incomingEdges: Map<GraphSymbol, GraphEdge<TEdge>[]>;
+export default class Graph<TNode, TEdge> implements IArrayLikeFiltering<GraphNode<TNode, TEdge>, GraphSymbol> {
+	private nodes: Map<GraphSymbol, GraphNode<TNode, TEdge>>;
 	private allowSameConnections: boolean;
 
 	constructor(allowSameConnections: boolean = false) {
 		this.nodes = new Map();
-		this.outgoingEdges = new Map();
-		this.incomingEdges = new Map();
 		this.allowSameConnections = allowSameConnections;
 	}
+	//#region Interface
+	reduce<t>(func: ReduceFunction<GraphNode<TNode, TEdge>, GraphSymbol, t, this>, initialValue: t): t {
+		return IArrayLikeHelper.Reduce(this, initialValue, func);
+	}
+	filter(
+		predicate: PredicateFunction<GraphNode<TNode, TEdge>, GraphSymbol, this>
+	): Graph<TNode, TEdge> {
+		return IArrayLikeHelper.Filter(this, new Graph<TNode, TEdge>(this.allowSameConnections), predicate);
+	}
+	forEach(func: ForEachFunction<GraphNode<TNode, TEdge>, GraphSymbol, this>): this {
+		this.nodes.forEach((value, key) => func(value, key, this));
+		return this;
+	}
+	forEachBreak(func: BreakPredicateFunction<GraphNode<TNode, TEdge>, GraphSymbol, this>): GraphSymbol {
+		for (const [key, value] of this.nodes.entries()) {
+			if (func(value, key, this) == SHOULD_BREAK.YES) return key;
+		}
+		return undefined;
+	}
+	get(index: GraphSymbol): GraphNode<TNode, TEdge> {
+		return this.nodes.get(index);
+	}
+	set(index: GraphSymbol, value: GraphNode<TNode, TEdge>): this {
+		this.addNode(index, value.type, value.data);
+		value.outgoing.forEach(e => {
+			this.addEdge(e.from, e.to, e.data)
+		})
+		value.incoming.forEach(e => {
+			this.addEdge(e.from, e.to, e.data)
+		})
+		return this;
+	}
+	//#endregion
 
 	addNode(id: GraphSymbol, type: GraphSymbol, data: TNode) {
 		if (!this.nodes.has(id)) {
-			this.nodes.set(id, { id, type, data });
-			this.outgoingEdges.set(id, []);
-			this.incomingEdges.set(id, []);
+			this.nodes.set(id, { id, type, data, outgoing: [], incoming: [] });
 		}
 		return this;
 	}
 
 	addEdge(from: GraphSymbol, to: GraphSymbol, data: TEdge) {
-		if (!this.nodes.has(from) || !this.nodes.has(to)) {
-			throw new Error("Both nodes must exist in the network!");
+		const fromNode = this.nodes.get(from);
+		const toNode = this.nodes.get(to);
+		if (fromNode === undefined || toNode === undefined) {
+			// throw new Error("Both nodes must exist in the network!");
+			return this;
 		}
-
-		const fromNode = this.nodes.get(from)!;
-		const toNode = this.nodes.get(to)!;
 
 		if (!this.allowSameConnections && fromNode.type === toNode.type) {
 			throw new Error("Nodes of the same type cannot be connected to each other!");
 		}
 
-		const outgoingEdges = this.outgoingEdges.get(from)!;
-		if (outgoingEdges.some((edge) => edge.to === to && edge.data === data)) {
-			return; // Edge already exists
+		fromNode.outgoing.some((edge) => edge.to === to);
+		if (fromNode.outgoing.some((edge) => edge.to === to)) {
+			return this; // Edge already exists
 		}
 
 		const newEdge: GraphEdge<TEdge> = { from, to, data };
-		outgoingEdges.push(newEdge);
-		this.incomingEdges.get(to)!.push(newEdge);
+
+		fromNode.outgoing.push(newEdge);
+		toNode.incoming.push(newEdge);
 		return this;
 	}
 
 	removeEdge(from: GraphSymbol, to: GraphSymbol) {
-		if (this.outgoingEdges.has(from)) {
-			this.outgoingEdges.set(
-				from,
-				this.outgoingEdges.get(from)!.filter((edge) => edge.to !== to)
-			);
+		const fromNode = this.nodes.get(from);
+		const toNode = this.nodes.get(to);
+		if (fromNode === undefined || toNode === undefined) {
+			return this;
 		}
-		if (this.incomingEdges.has(to)) {
-			this.incomingEdges.set(
-				to,
-				this.incomingEdges.get(to)!.filter((edge) => edge.from !== from)
-			);
-		}
+
+		const indexOut = fromNode.outgoing.findIndex((edge) => edge.to === to);
+		const indexIn = toNode.incoming.findIndex((edge) => edge.from === from);
+
+		if (indexOut != -1) fromNode.outgoing.splice(indexOut, 1);
+		if (indexIn != -1) toNode.incoming.splice(indexIn, 1);
 		return this;
+
+		// if (this.outgoingEdges.has(from)) {
+		// 	this.outgoingEdges.set(
+		// 		from,
+		// 		this.outgoingEdges.get(from)!.filter((edge) => edge.to !== to)
+		// 	);
+		// }
+		// if (this.incomingEdges.has(to)) {
+		// 	this.incomingEdges.set(
+		// 		to,
+		// 		this.incomingEdges.get(to)!.filter((edge) => edge.from !== from)
+		// 	);
+		// // }
+		// return this;
 	}
 
 	removeNode(id: GraphSymbol) {
+		const node = this.nodes.get(id);
+
+		node.outgoing.forEach((edge) => {
+			this.removeEdge(edge.from, edge.to);
+		});
+		node.incoming.forEach((edge) => {
+			this.removeEdge(edge.from, edge.to);
+		});
+
 		this.nodes.delete(id);
-		this.outgoingEdges.delete(id);
-		this.incomingEdges.delete(id);
-
-		this.outgoingEdges.forEach((edges, nodeId) => {
-			this.outgoingEdges.set(
-				nodeId,
-				edges.filter((edge) => edge.to !== id)
-			);
-		});
-
-		this.incomingEdges.forEach((edges, nodeId) => {
-			this.incomingEdges.set(
-				nodeId,
-				edges.filter((edge) => edge.from !== id)
-			);
-		});
 		return this;
 	}
 
-	getNode(id: GraphSymbol): GraphNode<TNode> | undefined {
-		return this.nodes.get(id);
-	}
-
 	getOutgoingNeighbors(id: GraphSymbol): GraphEdge<TEdge>[] | undefined {
-		return this.outgoingEdges.get(id);
+		return this.nodes.get(id)?.outgoing;
 	}
 
 	getIncomingNeighbors(id: GraphSymbol): GraphEdge<TEdge>[] | undefined {
-		return this.incomingEdges.get(id);
+		return this.nodes.get(id)?.incoming;
 	}
 
 	printNetwork() {
 		this.nodes.forEach((node, id) => {
-			const outgoingEdges = this.outgoingEdges.get(id)!;
-			const outgoingEdgesStr = outgoingEdges
+			const outgoingEdgesStr = node.outgoing
 				.map((edge) => `${edge.to} (data: ${edge.data.toString ? edge.data.toString() : edge.data})`)
 				.join(", ");
 			console.log(`${node.type} ${id} -> ${outgoingEdgesStr}`);
 
-			const incomingEdges = this.incomingEdges.get(id)!;
-			const incomingEdgesStr = incomingEdges
+			const incomingEdgesStr = node.incoming
 				.map((edge) => `${edge.from} (data: ${edge.data.toString ? edge.data.toString() : edge.data})`)
 				.join(", ");
 			console.log(`   <- ${incomingEdgesStr}`);
@@ -148,8 +188,6 @@ export class Graph<TNode, TEdge> {
 	serialize() {
 		return {
 			nodes: Array.from(this.nodes.entries()),
-			outgoingEdges: Array.from(this.outgoingEdges.entries()),
-			incomingEdges: Array.from(this.incomingEdges.entries()),
 			allowSameConnections: this.allowSameConnections,
 		};
 	}
@@ -159,8 +197,6 @@ export class Graph<TNode, TEdge> {
 		const res = new Graph<TNode, TEdge>();
 
 		res.nodes = new Map(obj.nodes);
-		res.outgoingEdges = new Map(obj.outgoingEdges);
-		res.incomingEdges = new Map(obj.incomingEdges);
 		res.allowSameConnections = obj.allowSameConnections;
 
 		return res;
@@ -203,19 +239,38 @@ export class Graph<TNode, TEdge> {
 			.up()
 			.ele("graph", { id: "G", edgedefault: "directed" });
 
+		function AppendEdge(edge: GraphEdge<TEdge>) {
+			const data = edge.data ?? {};
+
+			const edgeLabel: string = data["label"] ?? "";
+			const lineStyleColor: string = data["lineStyleColor"] ?? "#000000"; // Default line style color
+
+			doc.ele("edge", { source: edge.from, target: edge.to }) // no up
+				.ele("data", { key: "d10" }) // no up
+				.ele("y:GenericEdge", { configuration: "com.yworks.edge.framed" })
+				.ele("y:LineStyle", { color: lineStyleColor, type: "line", width: "3.0" })
+				.up()
+				.ele("y:Arrows", { source: "none", target: "standard" })
+				.up()
+				.ele("y:EdgeLabel", { alignment: "center", fontFamily: "Dialog", fontSize: "12", fontStyle: "plain" })
+				.txt(edgeLabel);
+		}
+
 		// Add nodes
 		this.nodes.forEach((node, id) => {
-			const label: string = node.data["label"] ?? "";
-			const shape: string = node.data["shape"] ?? "rectangle"; // Default shape
-			const fillColor: string = node.data["fillColor"] ?? "#FFCC00"; // Default fill color
-			const borderColor: string = node.data["borderColor"] ?? "#000000"; // Default border color
-			const x: string = node.data["x"] ?? 0; // Default border color
-			const y: string = node.data["y"] ?? 0; // Default border color
+			const data = node.data ?? {};
+
+			const label: string = data["label"] ?? "";
+			const shape: string = data["shape"] ?? "rectangle"; // Default shape
+			const fillColor: string = data["fillColor"] ?? "#FFCC00"; // Default fill color
+			const borderColor: string = data["borderColor"] ?? "#000000"; // Default border color
+			const x: string = data["x"] ?? 0; // Default border color
+			const y: string = data["y"] ?? 0; // Default border color
 
 			const lines = label.split("\n");
 
-			const nodeWidth = node.data["width"] ?? lines.reduce((a, b) => (a.length > b.length ? a : b)).length * 6 + 30;
-			const nodeHeight = node.data["height"] ?? lines.length * 16 + 30;
+			const nodeWidth = data["width"] ?? lines.reduce((a, b) => (a.length > b.length ? a : b)).length * 6 + 30;
+			const nodeHeight = data["height"] ?? lines.length * 16 + 30;
 
 			doc.ele("node", { id: node.id }) // no up
 				.ele("data", { key: "d4" })
@@ -239,24 +294,8 @@ export class Graph<TNode, TEdge> {
 				.ele("y:Fill", { color: fillColor, transparent: "false" })
 				.up()
 				.ele("y:BorderStyle", { color: borderColor, type: "line", width: "1.0" });
-		});
 
-		// Add edges
-		this.outgoingEdges.forEach((edges, from) => {
-			edges.forEach((edge) => {
-				const edgeLabel: string = edge.data["label"] ?? "";
-				const lineStyleColor: string = edge.data["lineStyleColor"] ?? "#000000"; // Default line style color
-
-				doc.ele("edge", { source: edge.from, target: edge.to }) // no up
-					.ele("data", { key: "d10" }) // no up
-					.ele("y:GenericEdge", { configuration: "com.yworks.edge.framed" })
-					.ele("y:LineStyle", { color: lineStyleColor, type: "line", width: "3.0" })
-					.up()
-					.ele("y:Arrows", { source: "none", target: "standard" })
-					.up()
-					.ele("y:EdgeLabel", { alignment: "center", fontFamily: "Dialog", fontSize: "12", fontStyle: "plain" })
-					.txt(edgeLabel);
-			});
+			node.outgoing.forEach(AppendEdge);
 		});
 
 		doc.up().ele("data", { key: "d6" }).ele("y:Resources").up().up();

@@ -1,11 +1,11 @@
 {
-  "name": "geometry",
-  "version": "1.0.0",
-  "main": "index.ts",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
-  "author": "",
-  "license": "ISC",
-  "description": ""
+	"name": "geometry",
+	"version": "1.0.0",
+	"main": "index.ts",
+	"dependencies": {
+		"xmlbuilder2": "^3.1.1"
+	},
+	"author": "StoneTrench",
+	"license": "ISC",
+	"description": ""
 }

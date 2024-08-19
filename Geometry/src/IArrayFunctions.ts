@@ -61,7 +61,7 @@ export namespace IArrayLikeHelper {
 
 		return accumulator;
 	}
-	export function Filter<T, I>(self: IArrayLikeFiltering<T, I>, result: IArrayLike<T, I>, predicate: PredicateFunction<T, I>) {
+	export function Filter<T, I>(self: IArrayLikeFiltering<T, I>, result: IArrayLike<T, I>, predicate: PredicateFunction<T, I>): any {
 		self.forEach((element, index, arr) => {
 			if (predicate(element, index, arr)) {
 				result.set(index, element);

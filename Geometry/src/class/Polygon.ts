@@ -12,9 +12,9 @@ import {
 	SHOULD_BREAK,
 	IArrayLikeComparison,
 	IArrayLikeDelete,
-} from "./IArrayFunctions";
-import { WrapGet, WrapIndex } from "./MathUtils";
-import { Segment } from "./Segment";
+} from "../IArrayFunctions";
+import { InsertIntoArray, WrapGet, WrapIndex } from "../MathUtils";
+import { Segment } from "../Segment";
 import Vector from "./Vector";
 
 const ERROR_INCORRECT_DIMENSIONS = "You can only have 2D vectors in a polygon!";
@@ -174,5 +174,43 @@ export default class Polygon
 
 		if (intersectionCount % 2 == 1) return true;
 		return false;
+	}
+
+	splitLargeSides(max_length: number) {
+		const max_length2 = max_length * max_length;
+
+		let newPoints: Vector[] = [this.first];
+		let new_i = 0;
+		let poly_i = 0;
+		while (true) {
+			const curr: Vector = newPoints[new_i];
+			let next: Vector | undefined = newPoints[new_i + 1];
+
+			if (next == undefined) {
+				poly_i++;
+				if (poly_i >= this.length) break;
+				next = this.get(poly_i);
+				newPoints.push(next);
+			}
+
+			if (curr.distanceSquared(next) > max_length2) InsertIntoArray(newPoints, new_i + 1, curr.plus(next).scale(0.5));
+			else new_i++;
+		}
+
+		return new Polygon(newPoints);
+	}
+
+	getSegments(){
+		const segments = this.reduce((res, curr) => {
+			res.push([curr, undefined]);
+			if (res.length == 1) return res;
+	
+			res[res.length - 2][1] = curr.clone();
+			return res;
+		}, [] as [Vector, Vector][]);
+	
+		segments[segments.length - 1][1] = this.first.clone();
+
+		return segments
 	}
 }

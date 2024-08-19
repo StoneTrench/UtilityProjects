@@ -1,6 +1,6 @@
-import Polygon from "../src/Polygon";
+import Polygon from "../src/class/Polygon";
 
-import Vector from "../src/Vector";
+import Vector from "../src/class/Vector";
 import { TestMatrix } from "./MatrixTest";
 import { TestVector } from "./VectorTest";
 
