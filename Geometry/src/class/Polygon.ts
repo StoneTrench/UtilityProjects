@@ -12,6 +12,7 @@ import {
 	SHOULD_BREAK,
 	IArrayLikeComparison,
 	IArrayLikeDelete,
+	IArrayLikeSearch,
 } from "../IArrayFunctions";
 import { InsertIntoArray, WrapGet, WrapIndex } from "../MathUtils";
 import { Segment } from "../Segment";
@@ -20,7 +21,7 @@ import Vector from "./Vector";
 const ERROR_INCORRECT_DIMENSIONS = "You can only have 2D vectors in a polygon!";
 
 /**
- * Counter-Clockwise
+ * Clockwise
  */
 export default class Polygon
 	implements
@@ -28,7 +29,8 @@ export default class Polygon
 		IArrayLikeStack<Vector, number>,
 		IArrayLikeFiltering<Vector, number>,
 		IArrayLikeComparison<Vector, number>,
-		IArrayLikeDelete<Vector, number>
+		IArrayLikeDelete<Vector, number>,
+		IArrayLikeSearch<Vector, number>
 {
 	private points: Vector[];
 	private max: Vector;
@@ -41,6 +43,16 @@ export default class Polygon
 	}
 
 	//#region Interface
+	find(predicate: PredicateFunction<Vector, number, this>): [number, Vector] {
+		return IArrayLikeHelper.Find(this, predicate);
+	}
+	findElement(predicate: PredicateFunction<Vector, number, this>): Vector {
+		return IArrayLikeHelper.FindElement(this, predicate);
+	}
+	findIndex(predicate: PredicateFunction<Vector, number, this>): number | undefined {
+		return IArrayLikeHelper.FindIndex(this, predicate);
+	}
+
 	every(predicate: PredicateFunction<Vector, number, this>): boolean {
 		return IArrayLikeHelper.Every(this, predicate);
 	}
@@ -137,7 +149,7 @@ export default class Polygon
 	}
 	getArea() {
 		let result = 0;
-		this.forEachSide(([curr, next]) => (result += (curr.y + next.y) * (curr.x - next.x)));
+		this.forEachSide(([curr, next]) => (result += (curr.y + next.y) * (next.x - curr.x)));
 		return result / 2;
 	}
 	getCircumference() {
@@ -161,18 +173,21 @@ export default class Polygon
 	isInternal(point: Vector, error: number = 0.05) {
 		if (!this.isInsideBoundingBox(point)) return false;
 
-		const lineEnd = point.offset(this.aabb_size.x);
+		const lineEnd = point.offset(this.aabb_size.x, Math.random());
 
 		const intersectionCount = this.reduce((res, curr, i, s) => {
 			const next = s.get(i + 1);
 
-			const intersection = Segment.Intersection2D(curr, next, point, lineEnd, error);
-			if (intersection === undefined) return res;
+			// if (curr.equals(point, error) || curr.equals(lineEnd, error) || next.equals(point, error) || next.equals(lineEnd, error))
+			// 	return res + 1;
+
+			const intersection1 = Segment.Intersection2D(curr, next, point, lineEnd, error);
+			if (intersection1 == undefined) return res;
 
 			return res + 1;
 		}, 0);
 
-		if (intersectionCount % 2 == 1) return true;
+		if (intersectionCount > 0 && intersectionCount % 2 == 1) return true;
 		return false;
 	}
 
@@ -200,17 +215,36 @@ export default class Polygon
 		return new Polygon(newPoints);
 	}
 
-	getSegments(){
+	getSegments() {
 		const segments = this.reduce((res, curr) => {
 			res.push([curr, undefined]);
 			if (res.length == 1) return res;
-	
+
 			res[res.length - 2][1] = curr.clone();
 			return res;
 		}, [] as [Vector, Vector][]);
-	
+
 		segments[segments.length - 1][1] = this.first.clone();
 
-		return segments
+		return segments;
+	}
+
+	/**
+	 * @returns [this index, other index]
+	 */
+	findSharedSegment(other: Polygon, error: number = 0.05): [number, number] | undefined {
+		let otherIndex = undefined;
+		const selfIndex = this.findIndex((curr1, i1, a1) => {
+			const next1 = a1.get(i1 + 1);
+
+			otherIndex = other.findIndex((next2, i2, a2) => {
+				const curr2 = a2.get(i2 + 1); // We need to check it backwards, think: gears rotating against eachother.
+				return curr1.equals(curr2, error) && next1.equals(next2, error);
+			});
+			return otherIndex != undefined;
+		});
+
+		if (selfIndex == undefined || otherIndex == undefined) return undefined;
+		return [selfIndex, otherIndex];
 	}
 }

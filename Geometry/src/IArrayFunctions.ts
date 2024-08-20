@@ -49,7 +49,7 @@ export interface IArrayLikeComparison<Element, Index> extends IArrayLikeLoop<Ele
 export interface IArrayLikeSearch<Element, Index> extends IArrayLikeLoop<Element, Index> {
 	find(predicate: PredicateFunction<Element, Index, this>): [Index, Element];
 	findElement(predicate: PredicateFunction<Element, Index, this>): Element;
-	findIndex(predicate: PredicateFunction<Element, Index, this>): Index;
+	findIndex(predicate: PredicateFunction<Element, Index, this>): Index | undefined;
 }
 export namespace IArrayLikeHelper {
 	export function Reduce<T, I, t>(self: IArrayLikeFiltering<T, I>, initialValue: t, func: ReduceFunction<T, I, t>) {

@@ -5,6 +5,8 @@ import {
 	IArrayLike,
 	IArrayLikeFiltering,
 	IArrayLikeHelper,
+	IArrayLikeMapping,
+	MapFunction,
 	PredicateFunction,
 	ReduceFunction,
 	SHOULD_BREAK,
@@ -44,9 +46,11 @@ export type TEdgeGraphML = {
 	arrows?: { source?: "none" | "standard"; target?: "none" | "standard" }; // Optional arrow styles
 };
 
-export type GraphSymbol = string | number | boolean;
+export type GraphSymbol = string | number | symbol;
 
-export default class Graph<TNode, TEdge> implements IArrayLikeFiltering<GraphNode<TNode, TEdge>, GraphSymbol> {
+export default class Graph<TNode, TEdge>
+	implements IArrayLikeFiltering<GraphNode<TNode, TEdge>, GraphSymbol>, IArrayLikeMapping<GraphNode<TNode, TEdge>, GraphSymbol>
+{
 	private nodes: Map<GraphSymbol, GraphNode<TNode, TEdge>>;
 	private allowSameConnections: boolean;
 
@@ -55,14 +59,20 @@ export default class Graph<TNode, TEdge> implements IArrayLikeFiltering<GraphNod
 		this.allowSameConnections = allowSameConnections;
 	}
 	//#region Interface
+	mapClone<t>(func: MapFunction<GraphNode<TNode, TEdge>, GraphSymbol, t, this>): Graph<TNode, TEdge> {
+		return IArrayLikeHelper.MapClone(this, new Graph<TNode, TEdge>(this.allowSameConnections), func);
+	}
+	map<t>(func: MapFunction<GraphNode<TNode, TEdge>, GraphSymbol, t, this>): t[] {
+		return IArrayLikeHelper.Map(this, func);
+	}
+
 	reduce<t>(func: ReduceFunction<GraphNode<TNode, TEdge>, GraphSymbol, t, this>, initialValue: t): t {
 		return IArrayLikeHelper.Reduce(this, initialValue, func);
 	}
-	filter(
-		predicate: PredicateFunction<GraphNode<TNode, TEdge>, GraphSymbol, this>
-	): Graph<TNode, TEdge> {
+	filter(predicate: PredicateFunction<GraphNode<TNode, TEdge>, GraphSymbol, this>): Graph<TNode, TEdge> {
 		return IArrayLikeHelper.Filter(this, new Graph<TNode, TEdge>(this.allowSameConnections), predicate);
 	}
+
 	forEach(func: ForEachFunction<GraphNode<TNode, TEdge>, GraphSymbol, this>): this {
 		this.nodes.forEach((value, key) => func(value, key, this));
 		return this;
@@ -77,20 +87,32 @@ export default class Graph<TNode, TEdge> implements IArrayLikeFiltering<GraphNod
 		return this.nodes.get(index);
 	}
 	set(index: GraphSymbol, value: GraphNode<TNode, TEdge>): this {
-		this.addNode(index, value.type, value.data);
-		value.outgoing.forEach(e => {
-			this.addEdge(e.from, e.to, e.data)
-		})
-		value.incoming.forEach(e => {
-			this.addEdge(e.from, e.to, e.data)
-		})
+		const exists = this.nodes.get(index);
+
+		if (value.id == undefined || value.type == undefined) throw new Error(`Value must have id and type values! Got: ${value}`);
+
+		this.nodes.set(index, {
+			id: value.id,
+			type: value.type,
+			data: value.data,
+			outgoing: (exists?.outgoing ?? []).concat(value.outgoing),
+			incoming: (exists?.incoming ?? []).concat(value.incoming),
+		});
+		// value.outgoing.forEach((e) => {
+		// 	this.addNode(e.to, 0, undefined);
+		// 	this.addEdge(e.from, e.to, e.data);
+		// });
+		// value.incoming.forEach((e) => {
+		// 	this.addNode(e.to, 0, undefined);
+		// 	this.addEdge(e.from, e.to, e.data);
+		// });
 		return this;
 	}
 	//#endregion
 
 	addNode(id: GraphSymbol, type: GraphSymbol, data: TNode) {
 		if (!this.nodes.has(id)) {
-			this.nodes.set(id, { id, type, data, outgoing: [], incoming: [] });
+			this.set(id, { id, type, data, outgoing: [], incoming: [] });
 		}
 		return this;
 	}
@@ -99,8 +121,7 @@ export default class Graph<TNode, TEdge> implements IArrayLikeFiltering<GraphNod
 		const fromNode = this.nodes.get(from);
 		const toNode = this.nodes.get(to);
 		if (fromNode === undefined || toNode === undefined) {
-			// throw new Error("Both nodes must exist in the network!");
-			return this;
+			throw new Error("Both nodes must exist in the network!");
 		}
 
 		if (!this.allowSameConnections && fromNode.type === toNode.type) {
@@ -173,12 +194,12 @@ export default class Graph<TNode, TEdge> implements IArrayLikeFiltering<GraphNod
 	printNetwork() {
 		this.nodes.forEach((node, id) => {
 			const outgoingEdgesStr = node.outgoing
-				.map((edge) => `${edge.to} (data: ${edge.data.toString ? edge.data.toString() : edge.data})`)
+				.map((edge) => `${edge.to.toString()} (data: ${edge.data.toString ? edge.data.toString() : edge.data})`)
 				.join(", ");
-			console.log(`${node.type} ${id} -> ${outgoingEdgesStr}`);
+			console.log(`${node.type.toString()} ${id.toString()} -> ${outgoingEdgesStr}`);
 
 			const incomingEdgesStr = node.incoming
-				.map((edge) => `${edge.from} (data: ${edge.data.toString ? edge.data.toString() : edge.data})`)
+				.map((edge) => `${edge.from.toString()} (data: ${edge.data.toString ? edge.data.toString() : edge.data})`)
 				.join(", ");
 			console.log(`   <- ${incomingEdgesStr}`);
 		});

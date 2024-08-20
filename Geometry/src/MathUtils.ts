@@ -9,9 +9,9 @@ export function WrapGet<T>(arr: T[], i: number): T {
 /**
  * Modified the existing array.
  */
-export function InsertIntoArray<T>(array: T[], index: number, element: T): T[]{
-	const end = array.splice(index)
-	array.push(element, ...end)
+export function InsertIntoArray<T>(array: T[], index: number, element: T): T[] {
+	const end = array.splice(index);
+	array.push(element, ...end);
 	return array;
 }
 /**
@@ -23,5 +23,11 @@ export function InsertIntoArray<T>(array: T[], index: number, element: T): T[]{
  * @returns A new vector wrapped within the specified range.
  */
 export function WrapVector(vec: Vector, min: Vector, size: Vector): Vector {
-	return vec.mapClone((e, i) => WrapIndex(e, size.get(i)) + min.get(i))
+	return vec.mapClone((e, i) => WrapIndex(e, size.get(i)) + min.get(i));
+}
+/**
+ * Clockwise
+ */
+export function TriangleArea(p1: Vector, p2: Vector, p3: Vector) {
+	return (p1.x * (p3.y - p2.y) + p2.x * (p1.y - p3.y) + p3.x * (p2.y - p1.y)) / 2;
 }

@@ -6,10 +6,24 @@ export namespace Segment {
 		endA: Vector,
 		startB: Vector,
 		endB: Vector,
-		error: number = 0.05
+		error: number = 0.05,
+
 	): Vector | undefined {
 		if (startA.equals(startB, error) || endA.equals(startB, error) || startA.equals(endB, error) || endA.equals(endB, error))
 			return undefined;
+
+		// if (startA.equals(startB, error)) {
+		// 	return startA.clone();
+		// }
+		// if (endA.equals(startB, error)) {
+		// 	return endA.clone();
+		// }
+		// if (startA.equals(endB, error)) {
+		// 	return startA.clone();
+		// }
+		// if (endA.equals(endB, error)) {
+		// 	return endA.clone();
+		// }
 
 		const errorMin = -error;
 		const errorMax = error;
@@ -103,7 +117,7 @@ export namespace Segment {
 				break;
 			}
 
-			if (intersectionPoint) {
+			if (intersectionPoint != undefined) {
 				const otherSegment = segments.splice(intersectionIndex, 1)[0];
 				if (!seg[0].equals(intersectionPoint, error)) segments.push([seg[0].clone(), intersectionPoint.clone()]);
 

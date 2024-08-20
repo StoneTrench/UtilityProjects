@@ -10,6 +10,7 @@ import Matrix from "./Matrix";
 
 const vectorElements = "xyzwabcdefgh";
 export type Axies = "x" | "y" | "z" | "w" | "a" | "b" | "c" | "d" | "e" | "f" | "g" | "h";
+const TAU = 6.28318530718;
 
 /**
  * Represents a mathematical vector of variable size.
@@ -89,6 +90,7 @@ export default class Vector implements IArrayLikeMapping<number, number> {
 	 * @returns Whether the vectors are equal.
 	 */
 	equals(other: Vector, error: number = 0): boolean {
+		if (other == undefined) return false;
 		if (this.getDimensions() !== other.getDimensions()) return false;
 		return this.values.every((e, i) => Math.abs(e - other.get(i)) <= error);
 	}
@@ -505,5 +507,10 @@ export default class Vector implements IArrayLikeMapping<number, number> {
 		if (this.getDimensions() < dimensions)
 			return new Vector(...this.values.concat(new Array(dimensions - this.getDimensions()).fill(0)));
 		return this.clone();
+	}
+	getAngle2D(other: Vector) {
+		const dot = this.x * other.x + this.y * other.y;
+		const det = this.x * other.y - this.y * other.x;
+		return (Math.atan2(det, dot) + TAU) % TAU;
 	}
 }

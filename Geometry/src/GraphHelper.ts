@@ -1,10 +1,11 @@
-import Graph from "./class/Graph";
+import Graph, { GraphSymbol } from "./class/Graph";
 import { HashVector } from "./class/Grid3D";
+import Polygon from "./class/Polygon";
 import Vector from "./class/Vector";
 
 export namespace GraphHelper {
 	export function GraphFromSegments(segments: [Vector, Vector][], error: number = 0.05) {
-		const result: Graph<Vector, undefined> = new Graph<Vector, undefined>(true);
+		const result: Graph<Vector, any> = new Graph<Vector, any>(true);
 
 		const invError = 1 / error;
 
@@ -21,94 +22,62 @@ export namespace GraphHelper {
 
 		return result;
 	}
+	export function GraphToPolygons(graph: Graph<Vector, any>) {
+		const nodeConnectionCount = graph.reduce((res, e) => {
+			res[e.id] = e.outgoing.length;
+			return res;
+		}, {} as { [id: GraphSymbol]: number });
 
-	// export async function GraphToPolygons(graph: Graph) {
-	// 	const graphLengths = Object.fromEntries(
-	// 		Object.entries(graph).map((e) => {
-	// 			return [e[0], e[1].connections.length];
-	// 		})
-	// 	);
+		const polygons: Polygon[] = [];
 
-	// 	function GetBestDirection(prev: GraphElement, current: GraphElement) {
-	// 		const selfVector = prev.pos.minus(current.pos).unit();
+		while (true) {
+			const nodeKeys = Object.keys(nodeConnectionCount);
+			const startNodeId = nodeKeys.find((e) => nodeConnectionCount[e] > 0) as GraphSymbol;
 
-	// 		let connections = current.connections;
-	// 		if (connections.length == 1) return connections[0]; // Dead end
+			if (startNodeId == undefined) break;
 
-	// 		connections = connections.filter((e) => e != prev.key);
-	// 		if (connections.length == 0) return null; //throw new Error(`Point with no connections! \nkey: ${current.key}\nconnections: ${current.connections}`);
+			let previousId = startNodeId;
+			let previousNodeInfo = graph.get(previousId);
 
-	// 		const heuristic = connections.map((e) => {
-	// 			return { 0: e, 1: GetAngle360XZ(selfVector, graph[e].pos.minus(current.pos).unit()) };
-	// 		});
-	// 		return heuristic.reduce((a, b) => (a[1] < b[1] ? a : b))[0];
-	// 	}
+			let currentId = previousNodeInfo.outgoing[0].to;
+			let currentNodeInfo = graph.get(currentId);
 
-	// 	async function TraversePolygonEdge(previous: GraphElement, current: GraphElement) {
-	// 		const startingKey = current.key;
+			const points: Vector[] = [];
 
-	// 		const polygon: string[] = [];
+			while (true) {
+				graph.removeEdge(previousNodeInfo.id, currentNodeInfo.id);
+				nodeConnectionCount[previousNodeInfo.id]--;
 
-	// 		while (true) {
-	// 			let nextPointKey = GetBestDirection(previous, current);
+				points.push(currentNodeInfo.data.clone());
 
-	// 			if (nextPointKey == null) break;
+				if (currentId == startNodeId) break;
+				const currentVector = previousNodeInfo.data.minus(currentNodeInfo.data);
 
-	// 			if (nextPointKey == previous.key && graphLengths[current.key] == 1) {
-	// 				polygon.push(current.key);
-	// 				// nextPointKey = previous.key;
-	// 			}
+				const directions = currentNodeInfo.outgoing
+					.map<[GraphSymbol, number]>((e) => [
+						e.to,
+						currentVector.getAngle2D(graph.get(e.to).data.minus(currentNodeInfo.data)),
+					])
+					.filter((e) => e[0] !== previousId);
 
-	// 			let nextPoint = graph[nextPointKey];
-	// 			polygon.push(current.key);
-	// 			previous = current;
-	// 			current = nextPoint;
+				const bestDirection =
+					directions.length == 0
+						? previousId
+						: directions.length == 1
+						? directions[0][0]
+						: directions.reduce((a, b) => (a[1] < b[1] ? a : b))[0];
 
-	// 			if (current.key == startingKey) break;
-	// 		}
+				previousId = currentId;
+				previousNodeInfo = currentNodeInfo;
 
-	// 		return polygon;
-	// 	}
+				currentId = bestDirection;
+				currentNodeInfo = graph.get(bestDirection);
+			}
 
-	// 	const graphKeys = Object.keys(graph);
-	// 	const resultPolygons: PolygonXZ[] = [];
+			const poly = new Polygon(points);
+			if (poly.getArea() > 0) polygons.push(poly);
+		}
 
-	// 	let failedPolygonStartKeys: string[] = [];
-
-	// 	while (true) {
-	// 		let currentPoint =
-	// 			graph[graphKeys.find((key) => graph[key].connections.length >= 1 && !failedPolygonStartKeys.includes(key))];
-
-	// 		if (!currentPoint) break;
-
-	// 		const startingPointVectors = currentPoint.connections.map((e) => graph[e].pos.minus(currentPoint.pos).unit());
-	// 		let previousPoint =
-	// 			graph[
-	// 				startingPointVectors.length > 1
-	// 					? CrossProductXZ(startingPointVectors[0], startingPointVectors[1]) > 0
-	// 						? currentPoint.connections[0]
-	// 						: currentPoint.connections[1]
-	// 					: currentPoint.connections[0]
-	// 			];
-
-	// 		const result = await TraversePolygonEdge(previousPoint, currentPoint);
-
-	// 		if (result.length > 0) {
-	// 			const poly = new PolygonXZ(result.map((e) => graph[e].pos));
-	// 			if (poly.GetArea() > 0) {
-	// 				// const printGrid = new DynamicGrid3D<string>("  ");
-	// 				// poly.DrawToGrid(printGrid, "██")
-	// 				// printGrid.print(0);
-	// 				resultPolygons.push(poly);
-	// 			}
-	// 			// Remove polygon path from graph
-	// 			result.forEach((e, i, a) => graph[e].connections.splice(graph[e].connections.indexOf(a.getWrap(i + 1)), 1));
-	// 		} else {
-	// 			console.log("Failed polygon!");
-	// 			failedPolygonStartKeys.push(currentPoint.key);
-	// 		}
-	// 	}
-
-	// 	return resultPolygons;
-	// }
+		return polygons;
+	}
 }
