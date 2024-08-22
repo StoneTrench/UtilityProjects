@@ -513,4 +513,15 @@ export default class Vector implements IArrayLikeMapping<number, number> {
 		const det = this.x * other.y - this.y * other.x;
 		return (Math.atan2(det, dot) + TAU) % TAU;
 	}
+
+	hash() {
+		let seed = this.getDimensions();
+		this.forEach((x) => {
+			x = ((x >> 16) ^ x) * 0x45d9f3b;
+			x = ((x >> 16) ^ x) * 0x45d9f3b;
+			x = (x >> 16) ^ x;
+			seed ^= x + 0x9e3779b9 + (seed << 6) + (seed >> 2);
+		});
+		return seed;
+	}
 }

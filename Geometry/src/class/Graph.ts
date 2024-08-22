@@ -29,6 +29,7 @@ export type GraphNode<TNode, TEdge> = {
 export type TNodeGraphML = {
 	label?: string;
 	shape?: "rectangle" | "hexagon" | "ellipse" | "roundrectangle"; // Optional with default
+	alignment?: "center" | "left" | "right";
 	fillColor?: string; // Optional color
 	borderColor?: string; // Optional border color
 	x?: number;
@@ -283,7 +284,8 @@ export default class Graph<TNode, TEdge>
 
 			const label: string = data["label"] ?? "";
 			const shape: string = data["shape"] ?? "rectangle"; // Default shape
-			const fillColor: string = data["fillColor"] ?? "#FFCC00"; // Default fill color
+			const alignment: string = data["alignment"] ?? "center"; // Default shape
+			const fillColor: string = data["fillColor"] ?? "#C0C0C0"; // Default fill color
 			const borderColor: string = data["borderColor"] ?? "#000000"; // Default border color
 			const x: string = data["x"] ?? 0; // Default border color
 			const y: string = data["y"] ?? 0; // Default border color
@@ -302,7 +304,7 @@ export default class Graph<TNode, TEdge>
 				.ele(`y:Geometry`, { height: `${nodeHeight}`, width: `${nodeWidth}`, x: `${x}`, y: `${y}` })
 				.up()
 				.ele("y:NodeLabel", {
-					alignment: "center",
+					alignment: alignment,
 					autoSizePolicy: "content",
 					fontFamily: "Dialog",
 					fontSize: "12",
