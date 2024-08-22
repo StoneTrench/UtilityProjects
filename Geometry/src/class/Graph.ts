@@ -39,11 +39,10 @@ export type TNodeGraphML = {
 };
 export type TEdgeGraphML = {
 	label?: string;
-	lineStyle?: {
-		color?: string;
-		type?: "line" | "dashed"; // Optional line type
-		width?: number; // Optional width
-	};
+	fillColor?: string;
+	borderColor?: string;
+	type?: "line" | "dashed";
+	width?: number;
 	arrows?: { source?: "none" | "standard"; target?: "none" | "standard" }; // Optional arrow styles
 };
 
@@ -90,7 +89,8 @@ export default class Graph<TNode, TEdge>
 	set(index: GraphSymbol, value: GraphNode<TNode, TEdge>): this {
 		const exists = this.nodes.get(index);
 
-		if (value.id == undefined || value.type == undefined) throw new Error(`Value must have id and type values! Got: ${value}`);
+		if (value.id == undefined || value.type == undefined)
+			throw new Error(`Value must have id and type values! Got: ${value}`);
 
 		this.nodes.set(index, {
 			id: value.id,
@@ -265,17 +265,23 @@ export default class Graph<TNode, TEdge>
 			const data = edge.data ?? {};
 
 			const edgeLabel: string = data["label"] ?? "";
-			const lineStyleColor: string = data["lineStyleColor"] ?? "#000000"; // Default line style color
+			const fillColor: string = data["fillColor"] ?? "#000000";
+			const borderColor: string = data["borderColor"] ?? "#000000";
+			const type: string = data["type"] ?? "line";
+			const width: number = data["width"] ?? 3;
 
 			doc.ele("edge", { source: edge.from, target: edge.to }) // no up
 				.ele("data", { key: "d10" }) // no up
 				.ele("y:GenericEdge", { configuration: "com.yworks.edge.framed" })
-				.ele("y:LineStyle", { color: lineStyleColor, type: "line", width: "3.0" })
+				.ele("y:LineStyle", { color: borderColor, type: type, width: `${width}` })
 				.up()
 				.ele("y:Arrows", { source: "none", target: "standard" })
 				.up()
 				.ele("y:EdgeLabel", { alignment: "center", fontFamily: "Dialog", fontSize: "12", fontStyle: "plain" })
-				.txt(edgeLabel);
+				.txt(edgeLabel)
+				.up()
+				.ele("y:StyleProperties")
+				.ele("y:Property", { class: "java.awt.Color", name: "FramedEdgePainter.fillColor", value: fillColor });
 		}
 
 		// Add nodes
@@ -285,7 +291,7 @@ export default class Graph<TNode, TEdge>
 			const label: string = data["label"] ?? "";
 			const shape: string = data["shape"] ?? "rectangle"; // Default shape
 			const alignment: string = data["alignment"] ?? "center"; // Default shape
-			const fillColor: string = data["fillColor"] ?? "#C0C0C0"; // Default fill color
+			const fillColor: string = data["fillColor"] ?? "#CCCCFF"; // Default fill color
 			const borderColor: string = data["borderColor"] ?? "#000000"; // Default border color
 			const x: string = data["x"] ?? 0; // Default border color
 			const y: string = data["y"] ?? 0; // Default border color
