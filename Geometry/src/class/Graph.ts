@@ -141,6 +141,10 @@ export default class Graph<TNode, TEdge>
 		return this;
 	}
 
+	getEdge(from: GraphSymbol, to: GraphSymbol) {
+		return this.get(from)?.outgoing.find((e) => e.to == to);
+	}
+
 	removeEdge(from: GraphSymbol, to: GraphSymbol) {
 		const fromNode = this.nodes.get(from);
 		const toNode = this.nodes.get(to);

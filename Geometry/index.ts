@@ -8,6 +8,9 @@ export * from "./src/class/color/Color";
 export * from "./src/class/color/ColorHelper";
 export * from "./src/class/color/Image";
 
+export * from "./src/class/constraints/Goals";
+export * from "./src/class/constraints/Pathfinder";
+
 export * from "./src/GraphHelper";
 export * from "./src/IArrayFunctions";
 export * from "./src/MathUtils";
