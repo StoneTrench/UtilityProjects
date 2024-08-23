@@ -1,8 +1,9 @@
 import Graph, { GraphSymbol } from "../Graph";
 
 export namespace Pathfinder {
-	export type ActionSymbol = GraphSymbol;
+	export type ActionSymbol = string;
 	export type Action<T> = { id: ActionSymbol; onCallAlteration: (current_state: T) => T; cost: number };
+	export type PathResult<T> = { actions: ActionSymbol[]; lastState: T };
 	export interface Goal<T> {
 		actions: Action<T>[];
 		startingState: T;
@@ -14,7 +15,7 @@ export namespace Pathfinder {
 		HashState(state: T): string;
 	}
 
-	export function FindPath<T>(goal: Goal<T>, maxOpenSet?: number): ActionSymbol[] {
+	export function FindPath<T>(goal: Goal<T>, maxOpenSet?: number): PathResult<T> {
 		/**
 		 * Action space graph -> Nodes are states, edges are actions
 		 *
@@ -26,17 +27,11 @@ export namespace Pathfinder {
 		 * We return the new state, and start over
 		 */
 
-		maxOpenSet ??= 3000;
+		maxOpenSet ??= 300000;
 
 		const actionSpaceGraph = new Graph<T, ActionSymbol>(true);
 		const startId = goal.HashState(goal.startingState);
-		actionSpaceGraph.set(startId, {
-			id: startId,
-			type: 0,
-			data: goal.startingState,
-			incoming: [],
-			outgoing: [],
-		});
+		actionSpaceGraph.addNode(startId, 0, goal.startingState);
 
 		const openSet: GraphSymbol[] = [startId];
 
@@ -57,6 +52,21 @@ export namespace Pathfinder {
 
 			const current_id = openSet.reduce((a, b) => (get_fCost(a) < get_fCost(b) ? a : b));
 			const current_state = actionSpaceGraph.get(current_id).data;
+		
+			if (goal.HasBeenReached(current_state)) {
+				const result: ActionSymbol[] = [];
+				let curr = current_id;
+				while (true) {
+					const prev = cameFrom.get(curr);
+					if (prev == undefined) break;
+					result.unshift(actionSpaceGraph.getEdge(prev, curr).data);
+					curr = prev;
+				}
+				return {
+					actions: result,
+					lastState: current_state,
+				};
+			}
 
 			openSet.splice(openSet.indexOf(current_id), 1);
 			const curr_gCost = get_gCost(current_id);
@@ -65,29 +75,10 @@ export namespace Pathfinder {
 			for (const action of goal.actions) {
 				const neigh_state = action.onCallAlteration(current_state);
 				if (!goal.CanTakeAction(current_state, neigh_state, action)) continue;
-
-				if (goal.HasBeenReached(current_state)) {
-					const result: ActionSymbol[] = [];
-					let curr = current_id;
-					while (true) {
-						const prev = cameFrom.get(curr);
-						if (prev == undefined) break;
-						result.unshift(actionSpaceGraph.getEdge(prev, curr).data);
-						curr = prev;
-					}
-					return result;
-				}
-
 				const neigh_id = goal.HashState(neigh_state);
-				actionSpaceGraph.set(neigh_id, {
-					id: neigh_id,
-					data: neigh_state,
-					incoming: [],
-					outgoing: [],
-					type: 1,
-				});
+				actionSpaceGraph.addNode(neigh_id, 1, neigh_state);
 				actionSpaceGraph.addEdge(current_id, neigh_id, action.id);
-
+				
 				const tentative_gScore = curr_gCost + action.cost;
 				if (tentative_gScore < get_gCost(neigh_id)) {
 					cameFrom.set(neigh_id, current_id);
@@ -95,7 +86,7 @@ export namespace Pathfinder {
 					gCost.set(neigh_id, tentative_gScore);
 					fCost.set(neigh_id, tentative_gScore + goal.ActionHeuristic(current_state, neigh_state, action));
 
-					if (!openSet.includes(neigh_id)) openSet.push(neigh_id);
+					if (!openSet.includes(neigh_id)) openSet.unshift(neigh_id);
 				}
 			}
 		}

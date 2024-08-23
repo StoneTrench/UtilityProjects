@@ -524,4 +524,11 @@ export default class Vector implements IArrayLikeMapping<number, number> {
 		});
 		return seed;
 	}
+
+	volume() {
+		return this.map((e) => e).reduce((a, b) => a * b);
+	}
+	sum() {
+		return this.map((e) => e).reduce((a, b) => a + b);
+	}
 }

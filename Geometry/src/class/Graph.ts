@@ -99,14 +99,6 @@ export default class Graph<TNode, TEdge>
 			outgoing: (exists?.outgoing ?? []).concat(value.outgoing),
 			incoming: (exists?.incoming ?? []).concat(value.incoming),
 		});
-		// value.outgoing.forEach((e) => {
-		// 	this.addNode(e.to, 0, undefined);
-		// 	this.addEdge(e.from, e.to, e.data);
-		// });
-		// value.incoming.forEach((e) => {
-		// 	this.addNode(e.to, 0, undefined);
-		// 	this.addEdge(e.from, e.to, e.data);
-		// });
 		return this;
 	}
 	//#endregion
