@@ -121,7 +121,7 @@ export namespace Goals {
 				this.actions.push({
 					id: `set_tile_${index}`,
 					onCallAlteration: (state) => this.setTile(state, index),
-					cost: 0,
+					cost: 1,
 				});
 			}
 			this.size = size.clone();
@@ -166,9 +166,7 @@ export namespace Goals {
 			const neighs = this.directions.map((e) => this.tiles[this.getValueFromState(clone, clone.cursor.plus(e))]);
 			clone.superPositions = this.tiles
 				.filter((self) =>
-					self.edges.every(
-						(edge, i) => neighs[i] == undefined || edge == neighs[i].edges[this.directions_inverse[i]]
-					)
+					self.edges.every((edge, i) => neighs[i] == undefined || edge == neighs[i].edges[this.directions_inverse[i]])
 				)
 				.map((e) => e.id);
 			return clone;
@@ -180,13 +178,13 @@ export namespace Goals {
 		actions: Pathfinder.Action<GoalStateWFC>[] = [
 			{
 				id: "move_cursor",
-				cost: 0,
+				cost: 1,
 				onCallAlteration: (state) => this.moveCursor(state),
 			},
 		];
 
 		ActionHeuristic(current_state: GoalStateWFC, next_state: GoalStateWFC, action?: Pathfinder.Action<GoalStateWFC>): number {
-			return Math.random() * 100 - next_state.counter;
+			return Math.random() * 2 - (next_state.counter * 10);
 		}
 		CanTakeAction(current_state: GoalStateWFC, next_state: GoalStateWFC, action?: Pathfinder.Action<GoalStateWFC>): boolean {
 			if (this.getValueFromState(current_state, current_state.cursor) != -1) {
@@ -202,7 +200,13 @@ export namespace Goals {
 			return state.counter >= this.maxCount;
 		}
 		HashState(state: GoalStateWFC): string {
-			return JSON.stringify(state);
+			const valuesString = Object.entries(state.values)
+				.map(([key, value]) => `${key}:${value}`)
+				.join("|");
+
+			const cursorString = `${state.cursor.x},${state.cursor.y},${state.cursor.z}`;
+
+			return `${valuesString}|${state.counter}|${cursorString}`;
 		}
 	}
 }

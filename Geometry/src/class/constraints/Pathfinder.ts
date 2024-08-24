@@ -3,7 +3,7 @@ import Graph, { GraphSymbol } from "../Graph";
 export namespace Pathfinder {
 	export type ActionSymbol = string;
 	export type Action<T> = { id: ActionSymbol; onCallAlteration: (current_state: T) => T; cost: number };
-	export type PathResult<T> = { actions: ActionSymbol[]; lastState: T };
+	export type PathResult<T> = { actions: ActionSymbol[]; lastState: T; graph: Graph<T, ActionSymbol> };
 	export interface Goal<T> {
 		actions: Action<T>[];
 		startingState: T;
@@ -27,7 +27,7 @@ export namespace Pathfinder {
 		 * We return the new state, and start over
 		 */
 
-		maxOpenSet ??= 300000;
+		maxOpenSet ??= 200;
 
 		const actionSpaceGraph = new Graph<T, ActionSymbol>(true);
 		const startId = goal.HashState(goal.startingState);
@@ -48,11 +48,11 @@ export namespace Pathfinder {
 		const get_fCost = (key: GraphSymbol) => fCost.get(key) ?? Number.POSITIVE_INFINITY;
 
 		while (openSet.length > 0) {
-			if (openSet.length > maxOpenSet) break;
+			if (openSet.length > maxOpenSet) openSet.splice(Math.floor(maxOpenSet / 2));
 
 			const current_id = openSet.reduce((a, b) => (get_fCost(a) < get_fCost(b) ? a : b));
 			const current_state = actionSpaceGraph.get(current_id).data;
-		
+
 			if (goal.HasBeenReached(current_state)) {
 				const result: ActionSymbol[] = [];
 				let curr = current_id;
@@ -65,6 +65,7 @@ export namespace Pathfinder {
 				return {
 					actions: result,
 					lastState: current_state,
+					graph: actionSpaceGraph,
 				};
 			}
 
@@ -78,7 +79,7 @@ export namespace Pathfinder {
 				const neigh_id = goal.HashState(neigh_state);
 				actionSpaceGraph.addNode(neigh_id, 1, neigh_state);
 				actionSpaceGraph.addEdge(current_id, neigh_id, action.id);
-				
+
 				const tentative_gScore = curr_gCost + action.cost;
 				if (tentative_gScore < get_gCost(neigh_id)) {
 					cameFrom.set(neigh_id, current_id);
@@ -91,6 +92,10 @@ export namespace Pathfinder {
 			}
 		}
 
-		return undefined;
+		return {
+			lastState: undefined,
+			actions: undefined,
+			graph: actionSpaceGraph,
+		};
 	}
 }
