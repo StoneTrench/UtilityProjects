@@ -3,10 +3,12 @@ export function Benchmark(name: string, iter: number, func: (...args: any[]) => 
 	console.log(`Result: ${BenchmarkSilent(iter, func, ...args)} ms`);
 }
 export function BenchmarkSilent(iter: number, func: (...args: any[]) => any, ...args: any[]) {
-	const startTime = Date.now();
-	for (let i = 0; i < iter; i++) func(...args);
-	const final = (Date.now() - startTime) / iter;
-	return final;
+	return new Promise<number>((resolve) => {
+		const startTime = Date.now();
+		for (let i = 0; i < iter; i++) func(...args);
+		const final = (Date.now() - startTime) / iter;
+		resolve(final);
+	});
 }
 
 export async function WaitForKeypress() {

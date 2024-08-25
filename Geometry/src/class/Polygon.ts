@@ -64,7 +64,7 @@ export default class Polygon
 		return IArrayLikeHelper.Reduce(this, initialValue, func);
 	}
 	filter(predicate: PredicateFunction<Vector, number, this>): IArrayLike<Vector, number> {
-		return IArrayLikeHelper.Filter(this, new Polygon([]), predicate);
+		return IArrayLikeHelper.FilterPush(this, new Polygon([]), predicate);
 	}
 
 	mapClone<t>(func: MapFunction<Vector, number, t, this>): Polygon {
@@ -246,5 +246,34 @@ export default class Polygon
 
 		if (selfIndex == undefined || otherIndex == undefined) return undefined;
 		return [selfIndex, otherIndex];
+	}
+
+	mergedAtSharedSegment(other: Polygon, error: number = 0.05): Polygon | undefined {
+		const sharedEdges = this.findSharedSegment(other, error);
+		if (sharedEdges == undefined) return undefined;
+
+		const points: Vector[] = [
+			...this.points.slice(0, sharedEdges[0]),
+			...other.points.slice(sharedEdges[1] + 1),
+			...other.points.slice(0, sharedEdges[1]),
+			...this.points.slice(sharedEdges[0] + 1),
+		];
+		if (points.length != other.points.length + this.points.length - 2) throw new Error(`Polygons merged incorrectly!`);
+
+		return new Polygon(points);
+	}
+
+	removeInternalPoints() {
+		while (true) {
+			const internalPoints: number[] = [];
+
+			this.forEachTriplet(([prev, curr, next], i) => {
+				if (prev.equals(next)) internalPoints.push(i, WrapIndex(i + 1, this.points.length));
+			});
+
+			if (internalPoints.length == 0) break;
+			internalPoints.sort((a, b) => b - a).forEach((e) => this.deleteAt(e));
+		}
+		return this;
 	}
 }

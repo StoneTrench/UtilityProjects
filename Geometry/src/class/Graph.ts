@@ -70,7 +70,7 @@ export default class Graph<TNode, TEdge>
 		return IArrayLikeHelper.Reduce(this, initialValue, func);
 	}
 	filter(predicate: PredicateFunction<GraphNode<TNode, TEdge>, GraphSymbol, this>): Graph<TNode, TEdge> {
-		return IArrayLikeHelper.Filter(this, new Graph<TNode, TEdge>(this.allowSameConnections), predicate);
+		return IArrayLikeHelper.FilterSet(this, new Graph<TNode, TEdge>(this.allowSameConnections), predicate);
 	}
 
 	forEach(func: ForEachFunction<GraphNode<TNode, TEdge>, GraphSymbol, this>): this {
@@ -104,9 +104,9 @@ export default class Graph<TNode, TEdge>
 	//#endregion
 
 	addNode(id: GraphSymbol, type: GraphSymbol, data: TNode) {
-		if (!this.nodes.has(id)) {
-			this.set(id, { id, type, data, outgoing: [], incoming: [] });
-		}
+		// if (!this.nodes.has(id)) {
+		this.set(id, { id, type, data, outgoing: [], incoming: [] });
+		// }
 		return this;
 	}
 
@@ -258,7 +258,7 @@ export default class Graph<TNode, TEdge>
 			.ele("graph", { id: "G", edgedefault: "directed" });
 
 		function AppendEdge(edge: GraphEdge<TEdge>) {
-			const data = edge.data ?? {};
+			let data = edge.data ?? {};
 
 			const edgeLabel: string = data["label"] ?? "";
 			const fillColor: string = data["fillColor"] ?? "#000000";
@@ -281,8 +281,8 @@ export default class Graph<TNode, TEdge>
 		}
 
 		// Add nodes
-		this.nodes.forEach((node, id) => {
-			const data = node.data ?? {};
+		this.nodes.forEach((node) => {
+			let data = node.data ?? {};
 
 			const label: string = data["label"] ?? "";
 			const shape: string = data["shape"] ?? "rectangle"; // Default shape
