@@ -85,31 +85,15 @@ export namespace Goals {
 		 * 	State
 		 * 		Has a map of the
 		 */
-		private readonly directions: Vector[] = [new Vector(0, 1), new Vector(1, 0), new Vector(0, -1), new Vector(-1, 0)];
-		private readonly directions_inverse: number[] = [2, 3, 0, 1];
+		private readonly directions: Vector[];
+		private readonly directions_inverse: number[];
 		size: Vector;
 		maxCount: number;
 
-		constructor(size: Vector, tiles?: { value: string; edges: string[] }[]) {
-			tiles ??= [
-				{
-					value: "--",
-					edges: [" ", "#", " ", "#"],
-				},
-				{
-					value: "| ",
-					edges: ["#", " ", "#", " "],
-				},
-				{
-					value: "+-",
-					edges: ["#", "#", "#", "#"],
-				},
-				{
-					value: "  ",
-					edges: [" ", " ", " ", " "],
-				},
-			];
+		constructor(size: Vector, tiles: { value: string; edges: string[] }[], directions?: Vector[]) {
+			this.directions = directions ?? [new Vector(0, 1), new Vector(1, 0), new Vector(0, -1), new Vector(-1, 0)];
 
+			this.directions_inverse = this.directions.map((a) => this.directions.findIndex((b) => b.equals(a.scaled(-1))));
 			this.tiles = tiles.map((e, i) => {
 				return {
 					value: e.value,
@@ -153,10 +137,7 @@ export namespace Goals {
 			const clone = this.cloneState(state);
 			this.setValueToState(clone, clone.cursor, index);
 			clone.counter++;
-			return clone;
-		}
-		moveCursor(state: GoalStateWFC): GoalStateWFC {
-			const clone = this.cloneState(state);
+
 			clone.cursor.translate(1).forEach((e, i, self) => {
 				if (e >= this.size.get(i)) {
 					self.set(i, 0);
@@ -175,38 +156,23 @@ export namespace Goals {
 		tiles: GoalTileWFC[] = [];
 
 		startingState: GoalStateWFC;
-		actions: Pathfinder.Action<GoalStateWFC>[] = [
-			{
-				id: "move_cursor",
-				cost: 1,
-				onCallAlteration: (state) => this.moveCursor(state),
-			},
-		];
+		actions: Pathfinder.Action<GoalStateWFC>[] = [];
 
 		ActionHeuristic(current_state: GoalStateWFC, next_state: GoalStateWFC, action?: Pathfinder.Action<GoalStateWFC>): number {
-			return Math.random() * 2 - (next_state.counter * 10);
+			return Math.random() - next_state.counter * 5;
 		}
 		CanTakeAction(current_state: GoalStateWFC, next_state: GoalStateWFC, action?: Pathfinder.Action<GoalStateWFC>): boolean {
-			if (this.getValueFromState(current_state, current_state.cursor) != -1) {
-				if (action.id == "move_cursor") return true;
-				return false;
-			}
-
-			if (action.id == "move_cursor") return false;
-			if (current_state.superPositions.includes(action.id)) return true;
-			return false;
+			return current_state.superPositions.includes(action.id);
 		}
 		HasBeenReached(state: GoalStateWFC): boolean {
 			return state.counter >= this.maxCount;
 		}
 		HashState(state: GoalStateWFC): string {
-			const valuesString = Object.entries(state.values)
-				.map(([key, value]) => `${key}:${value}`)
+			const valuesString = Object.values(state.values)
+				.map((value) => `${value}`)
 				.join("|");
 
-			const cursorString = `${state.cursor.x},${state.cursor.y},${state.cursor.z}`;
-
-			return `${valuesString}|${state.counter}|${cursorString}`;
+			return `${valuesString}|${state.cursor.x},${state.cursor.y},${state.cursor.z}`;
 		}
 	}
 }

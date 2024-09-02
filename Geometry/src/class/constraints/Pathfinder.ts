@@ -2,8 +2,16 @@ import { GraphSymbol } from "../Graph";
 
 export namespace Pathfinder {
 	export type ActionSymbol = string;
-	export type Action<T> = { id: ActionSymbol; onCallAlteration: (current_state: T) => T; cost: number };
-	export type PathResult<T> = { actions: ActionSymbol[]; lastState: T; graph: Map<GraphSymbol, [GraphSymbol, ActionSymbol][]> };
+	export type Action<T> = {
+		id: ActionSymbol;
+		onCallAlteration: (current_state: T) => T;
+		cost: number;
+	};
+	export type PathResult<T> = {
+		actions?: ActionSymbol[];
+		lastState?: T;
+		edges: Map<GraphSymbol, [GraphSymbol, ActionSymbol][]>;
+	};
 	export interface Goal<T> {
 		actions: Action<T>[];
 		startingState: T;
@@ -15,7 +23,7 @@ export namespace Pathfinder {
 		HashState(state: T): string;
 	}
 
-	export function FindPath<T>(goal: Goal<T>, maxOpenSet?: number): PathResult<T> {
+	export function FindPath<T>(goal: Goal<T>): PathResult<T> {
 		/**
 		 * Action space graph -> Nodes are states, edges are actions
 		 *
@@ -26,8 +34,6 @@ export namespace Pathfinder {
 		 * We take the action, it modifies the state
 		 * We return the new state, and start over
 		 */
-
-		maxOpenSet ??= 200;
 
 		const actionSpace_edges = new Map<GraphSymbol, [GraphSymbol, ActionSymbol][]>();
 		const actionSpace_nodes = new Map<GraphSymbol, T>();
@@ -46,12 +52,10 @@ export namespace Pathfinder {
 		// Cost of cheapest path to the node on the graph
 		const fCost = new Map<GraphSymbol, number>();
 		gCost.set(startId, 0);
-		const get_fCost = (key: GraphSymbol) => fCost.get(key) ?? Number.POSITIVE_INFINITY;
+		// const get_fCost = (key: GraphSymbol) => fCost.get(key) ?? Number.POSITIVE_INFINITY;
 
 		while (openSet.length > 0) {
-			if (openSet.length > maxOpenSet) openSet.splice(0, Math.floor(maxOpenSet / 2));
-
-			const current_id = openSet.reduce((a, b) => (get_fCost(a) < get_fCost(b) ? a : b));
+			const current_id = openSet.reduce((a, b) => (fCost.get(a) < fCost.get(b) ? a : b));
 			const current_state = actionSpace_nodes.get(current_id);
 
 			if (goal.HasBeenReached(current_state)) {
@@ -66,7 +70,7 @@ export namespace Pathfinder {
 				return {
 					actions: result,
 					lastState: current_state,
-					graph: actionSpace_edges,
+					edges: actionSpace_edges,
 				};
 			}
 
@@ -94,12 +98,14 @@ export namespace Pathfinder {
 					if (!openSet.includes(neigh_id)) openSet.push(neigh_id);
 				}
 			}
+
+			actionSpace_nodes.delete(current_id);
 		}
 
 		return {
 			lastState: undefined,
 			actions: undefined,
-			graph: actionSpace_edges,
+			edges: actionSpace_edges,
 		};
 	}
 }

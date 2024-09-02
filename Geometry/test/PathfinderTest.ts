@@ -83,14 +83,6 @@ export async function TestPathfinderWFC() {
 			edges: [" ", "#", " ", "#"],
 		},
 		{
-			value: "║",
-			edges: ["#", "x", "#", "x"],
-		},
-		{
-			value: "═",
-			edges: ["x", "#", "x", "#"],
-		},
-		{
 			value: "╔",
 			edges: [" ", "#", "#", " "],
 		},
@@ -107,64 +99,66 @@ export async function TestPathfinderWFC() {
 			edges: ["#", " ", " ", "#"],
 		},
 		{
-			value: "╔",
-			edges: ["x", "#", "#", "x"],
+			value: "╬",
+			edges: ["#", "#", "#", "#"],
 		},
 		{
-			value: "╗",
-			edges: ["x", "x", "#", "#"],
+			value: "╠",
+			edges: ["#", "#", "#", " "],
 		},
 		{
-			value: "╚",
-			edges: ["#", "#", "x", "x"],
+			value: "╣",
+			edges: ["#", " ", "#", "#"],
 		},
 		{
-			value: "╝",
-			edges: ["#", "x", "x", "#"],
+			value: "╦",
+			edges: [" ", "#", "#", "#"],
+		},
+		{
+			value: "╩",
+			edges: ["#", "#", " ", "#"],
 		},
 		{
 			value: " ",
 			edges: [" ", " ", " ", " "],
 		},
-		{
-			value: "#",
-			edges: ["x", "x", "x", "x"],
-		},
 	];
 
 	function Generate(goal: Goals.GoalWFC) {
-		const path = Pathfinder.FindPath(goal); // 83.73 ms for 8x8 // 0.589 ms for 2x2 // 10.418 ms for 4x4
+		const path = Pathfinder.FindPath(goal);
 
-		const debugGrid = new Grid<string>("  ");
-
-		debugGrid.setValues(
-			new Vector(0, 0),
-			goal.size.mapClone((e) => e - 1),
-			"  "
-		);
-
-		debugGrid.forEach((_, p) => {
-			const hash = new Vector(p.x, p.y).toString();
-			const tile = goal.tiles[path.lastState.values[hash]];
-			if (tile != undefined) debugGrid.set(p, tile.value);
-		});
-
-		debugGrid.alterGridPositions((e) => new Vector(e.x, 0, e.y)).print(0, false);
+		if (path.lastState != undefined) {
+			const debugGrid = new Grid<string>("  ");
+			debugGrid.setValues(
+				new Vector(0, 0),
+				goal.size.mapClone((e) => e - 1),
+				"  "
+			);
+			debugGrid.forEach((_, p) => {
+				const hash = new Vector(p.x, p.y).toString();
+				const tile = goal.tiles[path.lastState.values[hash]];
+				if (tile != undefined) debugGrid.set(p, tile.value);
+			});
+			debugGrid.alterGridPositions((e) => new Vector(e.x, 0, e.y)).print(0, false);
+		}
 
 		const outputGraph = new Graph<undefined, undefined>(true);
 
-		for (const [key, value] of path.graph.entries()) {
+		let memoryCounter = 10000;
+		for (const [key, value] of path.edges.entries()) {
 			outputGraph.addNode(key, 0, undefined);
 			for (const neigh of value) {
 				outputGraph.addNode(neigh[0], 0, undefined);
 				outputGraph.addEdge(key, neigh[0], undefined);
 			}
+			memoryCounter--;
+			if (memoryCounter < 0) break;
 		}
 
 		writeFileSync("./TestPathfinder.graphml", outputGraph.exportToGraphML());
 	}
 
-	Generate(new Goals.GoalWFC(new Vector(16, 16), tiles));
+	Generate(new Goals.GoalWFC(new Vector(2, 1).scale(16), tiles));
 
 	// const benches: Promise<string>[] = [];
 	// for (let i = 0; i < 10; i++) {
