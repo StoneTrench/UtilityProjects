@@ -31,14 +31,3 @@ export function WrapVector(vec: Vector, min: Vector, size: Vector): Vector {
 export function TriangleArea(p1: Vector, p2: Vector, p3: Vector) {
 	return (p1.x * (p3.y - p2.y) + p2.x * (p1.y - p3.y) + p3.x * (p2.y - p1.y)) / 2;
 }
-
-export function GetDateString() {
-	const date = new Date();
-	const year = date.getFullYear();
-	const month = `${date.getMonth() + 1}`.padStart(2, "0");
-	const day = `${date.getDate()}`.padStart(2, "0");
-	const hour = `${date.getHours()}`.padStart(2, "0");
-	const minute = `${date.getMinutes()}`.padStart(2, "0");
-	const second = `${date.getSeconds()}`.padStart(2, "0");
-	return `${year}_${month}_${day}-${hour}_${minute}_${second}`;
-}

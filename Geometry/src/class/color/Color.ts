@@ -40,7 +40,7 @@ export class Color implements IArrayLikeMapping<number, ColorChannels> {
 		return this;
 	}
 
-	unlinearizeGammaSRGB() {
+	applyGammaSRGB() {
 		return this.mapClone((linearValue) => {
 			if (linearValue <= 0.0031308) {
 				return 12.92 * linearValue;
@@ -50,7 +50,7 @@ export class Color implements IArrayLikeMapping<number, ColorChannels> {
 		});
 	}
 
-	linearizeGammaSRGB() {
+	removeGammaSRGB() {
 		return this.mapClone((srgbValue) => {
 			if (srgbValue <= 0.04045) {
 				return srgbValue / 12.92;
