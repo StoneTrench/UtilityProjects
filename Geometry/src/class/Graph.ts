@@ -48,7 +48,7 @@ export type TEdgeGraphML = {
 
 export type GraphSymbol = string | number | symbol;
 
-export default class Graph<TNode, TEdge>
+export class Graph<TNode, TEdge>
 	implements IArrayLikeFiltering<GraphNode<TNode, TEdge>, GraphSymbol>, IArrayLikeMapping<GraphNode<TNode, TEdge>, GraphSymbol>
 {
 	private nodes: Map<GraphSymbol, GraphNode<TNode, TEdge>>;

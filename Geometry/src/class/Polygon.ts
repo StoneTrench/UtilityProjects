@@ -16,14 +16,14 @@ import {
 } from "../IArrayFunctions";
 import { InsertIntoArray, WrapGet, WrapIndex } from "../MathUtils";
 import { Segment } from "../Segment";
-import Vector from "./Vector";
+import { Vector } from "./Vector";
 
 const ERROR_INCORRECT_DIMENSIONS = "You can only have 2D vectors in a polygon!";
 
 /**
  * Clockwise
  */
-export default class Polygon
+export class Polygon
 	implements
 		IArrayLikeMapping<Vector, number>,
 		IArrayLikeStack<Vector, number>,

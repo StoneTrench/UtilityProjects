@@ -7,7 +7,7 @@ import {
     MapFunction,
     SHOULD_BREAK,
 } from "../../IArrayFunctions";
-import Vector from "../Vector";
+import { Vector } from "../Vector";
 import { Color } from "./Color";
 
 export class Image implements IArrayLikeMapping<Color, Vector> {

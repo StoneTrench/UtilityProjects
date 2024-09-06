@@ -1,5 +1,5 @@
-import Grid from "../Grid3D";
-import Vector from "../Vector";
+import { Grid } from "../Grid3D";
+import { Vector } from "../Vector";
 import { Pathfinder } from "./Pathfinder";
 
 export namespace Goals {

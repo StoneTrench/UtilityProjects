@@ -1,4 +1,4 @@
-import Matrix from "../src/class/Matrix";
+import { AdvancedMatrix } from "../src/class/AdvancedMatrix";
 
 export function TestMatrix() {
 	function assert(condition: boolean, message: string) {
@@ -7,10 +7,10 @@ export function TestMatrix() {
 	console.log("Matrix testing started!");
 
 	// Test matrix creation
-	const matrix1 = new Matrix(2, 2, [1, 2, 3, 4]);
+	const matrix1 = new AdvancedMatrix(2, 2, [1, 2, 3, 4]);
 	assert(matrix1.toString() === "2x2\n1\t2\t\n3\t4\t\n", "Matrix 1 creation failed");
 
-	const matrix2 = new Matrix(2, 2, [5, 6, 7, 8]);
+	const matrix2 = new AdvancedMatrix(2, 2, [5, 6, 7, 8]);
 	assert(matrix2.toString() === "2x2\n5\t6\t\n7\t8\t\n", "Matrix 2 creation failed");
 
 	// Test matrix addition
@@ -35,7 +35,7 @@ export function TestMatrix() {
 	assert(invertedMatrix?.toString() === expectedInverted, "Matrix inversion failed");
 
 	// Test if matrix is identity
-	const identityMatrix = new Matrix(2, 2, [1, 0, 0, 1]);
+	const identityMatrix = new AdvancedMatrix(2, 2, [1, 0, 0, 1]);
 	assert(identityMatrix.isIdentity(), "Identity matrix check failed");
 
 	console.log("Matrix testing finished!");

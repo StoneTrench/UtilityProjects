@@ -2,7 +2,7 @@
 // i x j
 
 // m x n
-export default class Matrix {
+export class AdvancedMatrix {
 	/**
 	 * Column count.
 	 */
@@ -155,9 +155,9 @@ export default class Matrix {
 	 * @param other - The matrix to add.
 	 * @returns A new matrix with the result or undefined if the dimensions don't match.
 	 */
-	plus(other: Matrix) {
+	plus(other: AdvancedMatrix) {
 		if (this.n == other.n && this.m == other.m)
-			return new Matrix(
+			return new AdvancedMatrix(
 				this.m,
 				this.n,
 				this.matrix.map((e, i) => e + other.matrix[i])
@@ -170,7 +170,7 @@ export default class Matrix {
 	 * @param other - The matrix to multiply by.
 	 * @returns A new matrix with the result or undefined if the dimensions don't match.
 	 */
-	multiplied(other: Matrix) {
+	multiplied(other: AdvancedMatrix) {
 		if (this.n == other.m) {
 			let aNumRows = this.m;
 			let aNumCols = this.n;
@@ -187,7 +187,7 @@ export default class Matrix {
 				}
 			}
 
-			return new Matrix(aNumRows, bNumCols, numbers);
+			return new AdvancedMatrix(aNumRows, bNumCols, numbers);
 		} else return undefined;
 	}
 
@@ -196,7 +196,7 @@ export default class Matrix {
 	 * @returns A new matrix that is the transpose of this matrix.
 	 */
 	transposed() {
-		return new Matrix(
+		return new AdvancedMatrix(
 			this.n,
 			this.m,
 			this.matrix.map((e, index) => {
@@ -235,7 +235,7 @@ export default class Matrix {
 	 * @returns A new minor matrix with one less row and column.
 	 */
 	getMinorMatix(i: number, j: number) {
-		return new Matrix(
+		return new AdvancedMatrix(
 			this.m - 1,
 			this.n - 1,
 			this.matrix.filter((e, index) => {
@@ -271,7 +271,7 @@ export default class Matrix {
 	 * @returns A new scaled matrix.
 	 */
 	scale(value: number) {
-		return new Matrix(
+		return new AdvancedMatrix(
 			this.m,
 			this.n,
 			this.matrix.map((e) => e * value)
@@ -289,7 +289,7 @@ export default class Matrix {
 				numbers[j + i * this.n] = this.getMinorMatix(i, j).determinant()! * this.getHarbinger(i, j);
 			}
 		}
-		return new Matrix(this.m, this.n, numbers);
+		return new AdvancedMatrix(this.m, this.n, numbers);
 	}
 
 	/**
@@ -320,7 +320,7 @@ export default class Matrix {
 	 * @param error - The acceptable error margin for element comparisons.
 	 * @returns True if the matrices are equal within the given error margin.
 	 */
-	equals(other: Matrix, error: number = 0) {
+	equals(other: AdvancedMatrix, error: number = 0) {
 		return this.m == other.m && this.n == other.n && this.matrix.every((e, i) => Math.abs(e - other.matrix[i]) <= error);
 	}
 
@@ -329,7 +329,7 @@ export default class Matrix {
 	 * @returns A new matrix that is a clone of the current matrix.
 	 */
 	clone() {
-		return new Matrix(this.m, this.n, [...this.matrix]);
+		return new AdvancedMatrix(this.m, this.n, [...this.matrix]);
 	}
 
 	/**

@@ -1,6 +1,6 @@
 import { IArrayLikeSearch, IArrayLikeDelete, SHOULD_BREAK, IArrayLikeHelper, IArrayLikeMapping } from "../IArrayFunctions";
 import { WrapVector } from "../MathUtils";
-import Vector, { Axies } from "./Vector";
+import { Axies, Vector } from "./Vector";
 
 /**
  * Generates a unique hash string for a given 3D vector.
@@ -85,7 +85,7 @@ export const ASCII_GRADIENT_SHORT10 = ` .:-=+*#%@` as const;
  *
  * @template T - The type of elements stored in the grid.
  */
-export default class Grid<T>
+export class Grid<T>
 	implements
 		IArrayLikeMapping<T | undefined, Vector>,
 		IArrayLikeSearch<T | undefined, Vector>,

@@ -1,4 +1,4 @@
-import Vector from "../src/class/Vector";
+import { Vector } from "../src/class/Vector";
 
 export function TestVector() {
 	function assert(condition: boolean, message: string) {

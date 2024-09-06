@@ -6,7 +6,8 @@ import {
 	BreakPredicateFunction,
 	SHOULD_BREAK,
 } from "../IArrayFunctions";
-import Matrix from "./Matrix";
+import { WrapIndex } from "../MathUtils";
+import { AdvancedMatrix } from "./AdvancedMatrix";
 
 const vectorElements = "xyzwabcdefgh";
 export type Axies = "x" | "y" | "z" | "w" | "a" | "b" | "c" | "d" | "e" | "f" | "g" | "h";
@@ -15,7 +16,7 @@ const TAU = 6.28318530718;
 /**
  * Represents a mathematical vector of variable size.
  */
-export default class Vector implements IArrayLikeMapping<number, number> {
+export class Vector implements IArrayLikeMapping<number, number> {
 	/**
 	 * The values of the vector.
 	 */
@@ -25,7 +26,7 @@ export default class Vector implements IArrayLikeMapping<number, number> {
 	 * The x component of the vector.
 	 */
 	get x() {
-		return this.values[0] ?? 0;
+		return this.get(0);
 	}
 
 	/**
@@ -33,14 +34,14 @@ export default class Vector implements IArrayLikeMapping<number, number> {
 	 * @param value - The new x value.
 	 */
 	set x(value: number) {
-		this.values[0] = value;
+		this.set(0, value);
 	}
 
 	/**
 	 * The y component of the vector.
 	 */
 	get y() {
-		return this.values[1] ?? 0;
+		return this.get(1);
 	}
 
 	/**
@@ -48,14 +49,14 @@ export default class Vector implements IArrayLikeMapping<number, number> {
 	 * @param value - The new y value.
 	 */
 	set y(value: number) {
-		this.values[1] = value;
+		this.set(1, value);
 	}
 
 	/**
 	 * The z component of the vector.
 	 */
 	get z() {
-		return this.values[2] ?? 0;
+		return this.get(2);
 	}
 
 	/**
@@ -63,7 +64,22 @@ export default class Vector implements IArrayLikeMapping<number, number> {
 	 * @param value - The new z value.
 	 */
 	set z(value: number) {
-		this.values[2] = value;
+		this.set(2, value);
+	}
+
+	/**
+	 * The w component of the vector.
+	 */
+	get w() {
+		return this.get(3);
+	}
+
+	/**
+	 * Sets the z component of the vector.
+	 * @param value - The new z value.
+	 */
+	set w(value: number) {
+		this.set(3, value);
 	}
 
 	/**
@@ -119,7 +135,8 @@ export default class Vector implements IArrayLikeMapping<number, number> {
 	 * @returns This vector with updated values.
 	 */
 	set(index: number, value: number): this {
-		this.values[index] = value;
+		while (index >= this.getDimensions()) this.values.push(0);
+		this.values[WrapIndex(index, this.values.length)] = value;
 		return this;
 	}
 
@@ -301,8 +318,8 @@ export default class Vector implements IArrayLikeMapping<number, number> {
 	 * @param matrix - The matrix to multiply with.
 	 * @returns The resulting matrix.
 	 */
-	multMatrix(matrix: Matrix): Matrix | undefined {
-		return matrix.multiplied(new Matrix(this.getDimensions(), 1, this.values));
+	multMatrix(matrix: AdvancedMatrix): AdvancedMatrix | undefined {
+		return matrix.multiplied(new AdvancedMatrix(this.getDimensions(), 1, this.values));
 	}
 	/**
 	 * Translates the vector by the given arguments.
@@ -461,7 +478,7 @@ export default class Vector implements IArrayLikeMapping<number, number> {
 	 * @param vec - An object with x, y, and z properties.
 	 * @returns A new vector created from the input object.
 	 */
-	static fromVec3(vec: { x: number; y: number; z: number }): Vector {
+	static fromVec3(vec: { x: number, y: number, z: number }): Vector {
 		return new Vector(vec.x, vec.y, vec.z);
 	}
 

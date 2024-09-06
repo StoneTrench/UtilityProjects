@@ -2,9 +2,9 @@ import { writeFileSync } from "fs";
 import { Benchmark, BenchmarkSilent } from "../src/class/benchmark/Benchmark";
 import { Goals } from "../src/class/constraints/Goals";
 import { Pathfinder } from "../src/class/constraints/Pathfinder";
-import Grid from "../src/class/Grid3D";
-import Vector from "../src/class/Vector";
-import Graph from "../src/class/Graph";
+import { Grid } from "../src/class/Grid3D";
+import { Vector } from "../src/class/Vector";
+import { Graph } from "../src/class/Graph";
 
 export async function TestPathfinderWFC() {
 	console.log("Pathfinder WFC test started!");

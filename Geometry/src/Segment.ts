@@ -1,4 +1,4 @@
-import Vector from "./class/Vector";
+import { Vector } from "./class/Vector";
 
 export namespace Segment {
 	export function Intersection2D(

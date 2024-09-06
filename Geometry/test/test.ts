@@ -1,9 +1,12 @@
-import Polygon from "../src/class/Polygon";
+import { Polygon } from "../src/class/Polygon";
 
-import Vector from "../src/class/Vector";
+import { Vector } from "../src/class/Vector";
 import { TestMatrix } from "./MatrixTest";
 import { TestPathfinderWFC } from "./PathfinderTest";
+import { TestSimpleMatrix } from "./SimpleMatrixTest";
 import { TestVector } from "./VectorTest";
+
+TestSimpleMatrix()
 
 TestMatrix();
 TestVector();

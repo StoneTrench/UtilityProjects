@@ -6,9 +6,9 @@ import {
 	MapFunction,
 	SHOULD_BREAK,
 } from "../IArrayFunctions";
-import Vector from "./Vector";
+import { Vector } from "./Vector";
 
-export default class TensorGrid<T> implements IArrayLikeMapping<T, Vector> {
+export class TensorGrid<T> implements IArrayLikeMapping<T, Vector> {
 	private values: { [hash: string | number | symbol]: T };
 	private defaultValue: T;
 
