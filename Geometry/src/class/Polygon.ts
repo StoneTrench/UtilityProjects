@@ -1,3 +1,4 @@
+import { WrapGet, InsertIntoArray } from "../ArrayUtils";
 import {
 	IArrayLikeMapping,
 	IArrayLikeStack,
@@ -14,7 +15,7 @@ import {
 	IArrayLikeDelete,
 	IArrayLikeSearch,
 } from "../IArrayFunctions";
-import { InsertIntoArray, WrapGet, WrapIndex } from "../MathUtils";
+import { WrapIndex } from "../MathUtils";
 import { Segment } from "../Segment";
 import { Vector } from "./Vector";
 

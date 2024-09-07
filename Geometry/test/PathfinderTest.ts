@@ -142,13 +142,13 @@ export async function TestPathfinderWFC() {
 			debugGrid.alterGridPositions((e) => new Vector(e.x, 0, e.y)).print(0, false);
 		}
 
-		const outputGraph = new Graph<undefined, undefined>(true);
+		const outputGraph = new Graph<undefined, undefined>();
 
 		let memoryCounter = 10000;
 		for (const [key, value] of path.edges.entries()) {
-			outputGraph.addNode(key, 0, undefined);
+			outputGraph.addNode(key, undefined);
 			for (const neigh of value) {
-				outputGraph.addNode(neigh[0], 0, undefined);
+				outputGraph.addNode(neigh[0], undefined);
 				outputGraph.addEdge(key, neigh[0], undefined);
 			}
 			memoryCounter--;

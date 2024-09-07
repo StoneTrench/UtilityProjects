@@ -1,6 +1,7 @@
 export * from "./src/GraphHelper";
 export * from "./src/IArrayFunctions";
 export * from "./src/MathUtils";
+export * from "./src/ArrayUtils";
 export * from "./src/GenerateUUID";
 export * from "./src/Segment";
 export * from "./src/BoundingBox";
@@ -11,6 +12,7 @@ export * from "./src/class/AdvancedMatrix";
 export * from "./src/class/SimpleMatrix";
 export * from "./src/class/Polygon";
 export * from "./src/class/Vector";
+export * from "./src/class/TreeMap";
 
 export * from "./src/class/rasterization/Bezier";
 export * from "./src/class/rasterization/Interpolation";

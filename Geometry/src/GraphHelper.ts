@@ -5,7 +5,7 @@ import { Vector } from "./class/Vector";
 
 export namespace GraphHelper {
 	export function GraphFromSegments(segments: [Vector, Vector][], error: number = 0.05) {
-		const result: Graph<Vector, any> = new Graph<Vector, any>(true);
+		const result: Graph<Vector, any> = new Graph<Vector, any>();
 
 		const invError = 1 / error;
 
@@ -13,8 +13,8 @@ export namespace GraphHelper {
 			const hash0 = HashVector(seg[0].scaled(invError).floor().scale(error));
 			const hash1 = HashVector(seg[1].scaled(invError).floor().scale(error));
 
-			result.addNode(hash0, 0, seg[0].clone());
-			result.addNode(hash1, 0, seg[1].clone());
+			result.addNode(hash0, seg[0].clone());
+			result.addNode(hash1, seg[1].clone());
 
 			result.addEdge(hash0, hash1, undefined);
 			result.addEdge(hash1, hash0, undefined);

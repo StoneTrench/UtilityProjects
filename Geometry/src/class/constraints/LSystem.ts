@@ -68,7 +68,7 @@ export namespace LSystem {
 	 * @returns {Graph<TNodeGraphML, TEdgeGraphML>} A directed graph where nodes are created based on the parsed string.
 	 */
 	export function ConvertToGraph(str: string) {
-		const result = new Graph<TNodeGraphML, TEdgeGraphML>(true);
+		const result = new Graph<TNodeGraphML, TEdgeGraphML>();
 
 		function ParseBracket(start: number, prevNode: number, parsingType: PARSING_TYPE) {
 			let i: number = start;
@@ -87,7 +87,7 @@ export namespace LSystem {
 					switch (parsingType) {
 						case PARSING_TYPE.DEFAULT:
 							var nextNode = currentNode + Math.random();
-							result.addNode(nextNode, "node", { label: char });
+							result.addNode(nextNode, { label: char });
 							result.addEdge(currentNode, nextNode, {});
 							currentNode = nextNode;
 							break;
@@ -101,7 +101,7 @@ export namespace LSystem {
 			return str.length;
 		}
 
-		result.addNode(0, "root", { label: "root" });
+		result.addNode(0, { label: "root" });
 		ParseBracket(0, 0, PARSING_TYPE.DEFAULT);
 		return result;
 	}
