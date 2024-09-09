@@ -1,4 +1,4 @@
-import { GraphSymbol } from "../Graph";
+import { GraphSymbol } from "../graph/GraphTypes";
 
 export namespace Pathfinder {
 	export type ActionSymbol = string;

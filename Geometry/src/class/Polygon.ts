@@ -17,7 +17,7 @@ import {
 } from "../IArrayFunctions";
 import { WrapIndex } from "../MathUtils";
 import { Segment } from "../Segment";
-import { Vector } from "./Vector";
+import { Vector } from "./math/Vector";
 
 const ERROR_INCORRECT_DIMENSIONS = "You can only have 2D vectors in a polygon!";
 

@@ -1,4 +1,4 @@
-import { Vector } from "../Vector";
+import { Vector } from "../math/Vector";
 
 export function Lerp(a: number, b: number, t: number) {
 	return a * (1 - t) + b * t;

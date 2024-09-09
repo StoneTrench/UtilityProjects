@@ -5,8 +5,8 @@ import {
 	ForEachFunction,
 	BreakPredicateFunction,
 	SHOULD_BREAK,
-} from "../IArrayFunctions";
-import { WrapIndex } from "../MathUtils";
+} from "../../IArrayFunctions";
+import { WrapIndex } from "../../MathUtils";
 import { AdvancedMatrix } from "./AdvancedMatrix";
 
 const vectorElements = "xyzwabcdefgh";

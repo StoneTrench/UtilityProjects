@@ -9,42 +9,8 @@ import {
 	PredicateFunction,
 	ReduceFunction,
 	SHOULD_BREAK,
-} from "../IArrayFunctions";
-
-export type GraphEdge<T> = {
-	from: GraphSymbol;
-	to: GraphSymbol;
-	data: T;
-};
-
-export type GraphNode<TNode, TEdge> = {
-	id: GraphSymbol;
-	data: TNode;
-	incoming: GraphEdge<TEdge>[];
-	outgoing: GraphEdge<TEdge>[];
-};
-
-export type TNodeGraphML = {
-	label?: string;
-	shape?: "rectangle" | "hexagon" | "ellipse" | "roundrectangle"; // Optional with default
-	alignment?: "center" | "left" | "right";
-	fillColor?: string; // Optional color
-	borderColor?: string; // Optional border color
-	x?: number;
-	y?: number;
-	width?: number;
-	height?: number;
-};
-export type TEdgeGraphML = {
-	label?: string;
-	fillColor?: string;
-	borderColor?: string;
-	type?: "line" | "dashed";
-	width?: number;
-	arrows?: { source?: "none" | "standard"; target?: "none" | "standard" }; // Optional arrow styles
-};
-
-export type GraphSymbol = string | number | symbol;
+} from "../../IArrayFunctions";
+import { GraphEdge, GraphNode, GraphSymbol } from "./GraphTypes";
 
 export class Graph<TNode, TEdge>
 	implements IArrayLikeFiltering<GraphNode<TNode, TEdge>, GraphSymbol>, IArrayLikeMapping<GraphNode<TNode, TEdge>, GraphSymbol>
@@ -85,8 +51,7 @@ export class Graph<TNode, TEdge>
 	set(index: GraphSymbol, value: GraphNode<TNode, TEdge>): this {
 		const exists = this.nodes.get(index);
 
-		if (value.id == undefined)
-			throw new Error(`Node must have an id value! Got: ${value}`);
+		if (value.id == undefined) throw new Error(`Node must have an id value! Got: ${value}`);
 
 		this.nodes.set(index, {
 			id: value.id,
@@ -166,19 +131,14 @@ export class Graph<TNode, TEdge>
 	}
 
 	printNetwork() {
-		console.log(this.toString())
+		console.log(this.toString());
 		return this;
 	}
 
-    toString() {
+	toString() {
 		return Array.from(this.nodes.values())
 			.map((self) => {
-				return `${self.outgoing
-					.map(
-						(other) =>
-							`${self.id.toString()} --> ${other.to.toString()};`
-					)
-					.join("\n")}`;
+				return `${self.outgoing.map((other) => `${self.id.toString()} --> ${other.to.toString()};`).join("\n")}`;
 			})
 			.join("\n");
 	}

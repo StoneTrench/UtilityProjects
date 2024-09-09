@@ -1,6 +1,7 @@
 import { GenerateTimestampID } from "../../GenerateUUID";
-import { Graph, TNodeGraphML, TEdgeGraphML } from "../Graph";
-import { Vector } from "../Vector";
+import { Graph } from "../graph/Graph";
+import { TNodeGraphML, TEdgeGraphML } from "../graph/GraphTypes";
+import { Vector } from "../math/Vector";
 
 /**
  * [Lindenmayer system](https://en.wikipedia.org/wiki/L-system)

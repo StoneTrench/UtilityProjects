@@ -1,4 +1,4 @@
-import { CreateTransformMatrix4x4, InvertMatrix4x4, MultiplyMatrix4x4, PrintMatrix4x4 } from "../src/class/SimpleMatrix";
+import { CreateTransformMatrix4x4, InvertMatrix4x4, MultiplyMatrix4x4, PrintMatrix4x4 } from "../src/class/math/SimpleMatrix";
 import { MConst } from "../src/MathUtils";
 
 export function TestSimpleMatrix() {

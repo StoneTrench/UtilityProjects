@@ -1,4 +1,4 @@
-import { Vector } from "../Vector";
+import { Vector } from "../math/Vector";
 import { BezierCurve4, BezierCurve4Derivative } from "./Interpolation";
 
 /**

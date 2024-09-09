@@ -1,4 +1,4 @@
-import { Vector } from "./class/Vector";
+import { Vector } from "./class/math/Vector";
 
 export type BoundingBox = {
 	min: Vector;

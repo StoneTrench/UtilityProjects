@@ -1,7 +1,8 @@
-import { Graph, GraphSymbol } from "./class/Graph";
 import { HashVector } from "./class/Grid3D";
 import {Polygon} from "./class/Polygon";
-import { Vector } from "./class/Vector";
+import { Graph } from "./class/graph/Graph";
+import { GraphSymbol } from "./class/graph/GraphTypes";
+import { Vector } from "./class/math/Vector";
 
 export namespace GraphHelper {
 	export function GraphFromSegments(segments: [Vector, Vector][], error: number = 0.05) {

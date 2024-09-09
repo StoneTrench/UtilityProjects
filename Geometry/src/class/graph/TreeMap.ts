@@ -10,30 +10,32 @@ import {
 	PredicateFunction,
 	ReduceFunction,
 	SHOULD_BREAK,
-} from "../IArrayFunctions";
+} from "../../IArrayFunctions";
 
 export type TreeMapValue<K, V> = TreeMap<K, V> | V;
 
 export class TreeMap<K, V> implements IArrayLikeSearch<V, K[]>, IArrayLikeMapping<V, K[]>, IArrayLikeFiltering<V, K[]> {
 	public children: Map<K, TreeMapValue<K, V>>;
+	private recursionLimit: number;
 
-	constructor() {
+	constructor(recursionLimit?: number) {
 		this.children = new Map();
+		this.recursionLimit = recursionLimit ?? 1000;
 	}
 
 	//#region Interface
-    reduce<t>(func: ReduceFunction<V, K[], t, this>, initialValue: t): t {
-        return IArrayLikeHelper.Reduce(this, initialValue, func);
-    }
-    filter(predicate: PredicateFunction<V, K[], this>): IArrayLike<V, K[]> {
-        return IArrayLikeHelper.FilterSet(this, new TreeMap<K, V>, predicate);
-    }
-    mapClone<t>(func: MapFunction<V, K[], t, this>) {
-		return IArrayLikeHelper.MapClone(this, new TreeMap<K, t>, func);
-    }
-    map<t>(func: MapFunction<V, K[], t, this>): t[] {
+	reduce<t>(func: ReduceFunction<V, K[], t, this>, initialValue: t): t {
+		return IArrayLikeHelper.Reduce(this, initialValue, func);
+	}
+	filter(predicate: PredicateFunction<V, K[], this>): IArrayLike<V, K[]> {
+		return IArrayLikeHelper.FilterSet(this, new TreeMap<K, V>(), predicate);
+	}
+	mapClone<t>(func: MapFunction<V, K[], t, this>) {
+		return IArrayLikeHelper.MapClone(this, new TreeMap<K, t>(), func);
+	}
+	map<t>(func: MapFunction<V, K[], t, this>): t[] {
 		return IArrayLikeHelper.Map(this, func);
-    }
+	}
 	find(predicate: PredicateFunction<V, K[], this>): [K[], V] {
 		return IArrayLikeHelper.Find(this, predicate);
 	}
@@ -44,6 +46,8 @@ export class TreeMap<K, V> implements IArrayLikeSearch<V, K[]>, IArrayLikeMappin
 		return IArrayLikeHelper.FindIndex(this, predicate);
 	}
 	forEach(func: ForEachFunction<V, K[], this>, parentKeys?: K[]): this {
+		if (parentKeys.length > this.recursionLimit) return this;
+
 		for (const [key, value] of this.children) {
 			if (value instanceof TreeMap) value.forEach(func, [...parentKeys, key]);
 			else func(value, [...parentKeys, key], this);
@@ -51,6 +55,8 @@ export class TreeMap<K, V> implements IArrayLikeSearch<V, K[]>, IArrayLikeMappin
 		return this;
 	}
 	forEachBreak(func: BreakPredicateFunction<V, K[], this>, parentKeys?: K[]): K[] {
+		if (parentKeys.length > this.recursionLimit) return undefined;
+
 		for (const [key, value] of this.children) {
 			if (value instanceof TreeMap) {
 				const child_key = value.forEachBreak(func, [...parentKeys, key]);
