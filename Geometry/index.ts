@@ -21,6 +21,8 @@ export * from "./src/class/math/TensorGrid";
 
 export * from "./src/class/rasterization/Bezier";
 export * from "./src/class/rasterization/Interpolation";
+export * from "./src/class/rasterization/Bresenham";
+export * from "./src/class/rasterization/SubdivisionRasterize";
 
 export * from "./src/class/benchmark/Benchmark";
 

@@ -1,5 +1,6 @@
 import { TestMatrix } from "./MatrixTest";
 import { TestPathfinderWFC } from "./PathfinderTest";
+import { TestRasterizer } from "./RasterizerTest";
 import { TestSimpleMatrix } from "./SimpleMatrixTest";
 import { TestVector } from "./VectorTest";
 
@@ -8,7 +9,9 @@ TestSimpleMatrix();
 TestMatrix();
 TestVector();
 
-TestPathfinderWFC();
+// TestPathfinderWFC();
+
+TestRasterizer();
 
 // const vec1 = new Vector(1, 2, 0);
 // const vec2 = new Vector(0, 0, -1);
