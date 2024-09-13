@@ -9,7 +9,7 @@ import {
 	PredicateFunction,
 	ReduceFunction,
 	SHOULD_BREAK,
-} from "../../IArrayFunctions";
+} from "../IArrayFunctions";
 import { GraphEdge, GraphNode, GraphSymbol } from "./GraphTypes";
 
 export class Graph<TNode, TEdge>

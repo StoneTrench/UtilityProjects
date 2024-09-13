@@ -1,11 +1,11 @@
 import {
-	BreakPredicateFunction,
-	ForEachFunction,
-	IArrayLikeHelper,
 	IArrayLikeMapping,
 	MapFunction,
+	IArrayLikeHelper,
+	ForEachFunction,
+	BreakPredicateFunction,
 	SHOULD_BREAK,
-} from "../../IArrayFunctions";
+} from "../IArrayFunctions";
 
 export type ColorChannels = "r" | "g" | "b" | "a";
 
@@ -66,7 +66,7 @@ export class Color implements IArrayLikeMapping<number, ColorChannels> {
 	minus(other: Color) {
 		return this.mapClone((e, i) => e - other.get(i));
 	}
-	scale(scalar: number){
+	scale(scalar: number) {
 		return this.mapClone((e, i) => e * scalar);
 	}
 }

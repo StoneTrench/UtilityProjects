@@ -1,4 +1,4 @@
-import { GenerateTimestampID } from "../../GenerateUUID";
+import { GenerateTimestampID } from "../GenerateUUID";
 import { Graph } from "../graph/Graph";
 import { TNodeGraphML, TEdgeGraphML } from "../graph/GraphTypes";
 import { Vector } from "../math/Vector";

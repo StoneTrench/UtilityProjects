@@ -1,5 +1,5 @@
-import { IArrayLikeSearch, IArrayLikeDelete, SHOULD_BREAK, IArrayLikeHelper, IArrayLikeMapping } from "../../IArrayFunctions";
-import { WrapVector } from "../../MathUtils";
+import { IArrayLikeSearch, IArrayLikeDelete, SHOULD_BREAK, IArrayLikeHelper, IArrayLikeMapping } from "../IArrayFunctions";
+import { WrapVector } from "../MathUtils";
 import { Axes, Vector } from "../math/Vector";
 
 /**
@@ -209,7 +209,8 @@ export class Grid<T>
 	 * @throws Will throw an error if the value is undefined.
 	 */
 	set(pos: Vector, value?: T): this {
-		if (value == undefined) throw new Error("Value was undefined!");
+		// if (value == undefined) throw new Error("Value was undefined!");
+		// if (pos == undefined) return this;
 		if (this.doesWrap && !this.isInside(pos)) pos = WrapVector(pos, this.min, this.getSize());
 		if (this.firstElement) {
 			this.firstElement = false;
@@ -400,11 +401,14 @@ export class Grid<T>
 	 * @returns {Grid<T>} - A new grid that is a copy of the current grid.
 	 */
 	clone(): Grid<T> {
+		return this.copy(this.min, this.max);
+	}
+
+	copy(pos1: Vector, pos2: Vector) {
 		const result = new Grid<T>(this.defaultElement);
-		this.forEach((e, p, g) => {
-			const value = this.get(p);
-			if (value === this.defaultElement) return;
-			result.set(p, value);
+		this.forVolume(pos1, pos2, (v, p) => {
+			if (v === this.defaultElement) return;
+			result.set(p, v);
 		});
 		return result;
 	}
@@ -417,8 +421,9 @@ export class Grid<T>
 	 */
 	paste(pos: Vector, other: Grid<T>): Grid<T> {
 		if (this.defaultElement === other.defaultElement) {
-			other.forEach((v, p, g) => {
-				if (v !== this.defaultElement) this.set(p.plus(pos), v);
+			other.forEach((v, p) => {
+				if (v === this.defaultElement) return;
+				this.set(p.plus(pos), v);
 			});
 		} else {
 			other.forEach((v, p, g) => {

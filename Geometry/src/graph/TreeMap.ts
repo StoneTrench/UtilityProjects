@@ -10,7 +10,7 @@ import {
 	PredicateFunction,
 	ReduceFunction,
 	SHOULD_BREAK,
-} from "../../IArrayFunctions";
+} from "../IArrayFunctions";
 
 export type TreeMapValue<K, V> = TreeMap<K, V> | V;
 
@@ -79,7 +79,7 @@ export class TreeMap<K, V> implements IArrayLikeSearch<V, K[]>, IArrayLikeMappin
 			const child = this.children.get(index[0]);
 			if (child instanceof TreeMap) return child.get(index.slice(1));
 		} else if (index.length == 1) return this.children.get(index[0]);
-		return undefined;
+		return this;
 	}
 	//#endregion
 }

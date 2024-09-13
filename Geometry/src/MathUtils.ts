@@ -1,4 +1,4 @@
-import { Vector } from "./class/math/Vector";
+import { Vector } from "./math/Vector";
 
 /**
  * Wraps an index within a given length, ensuring it stays within the valid range.

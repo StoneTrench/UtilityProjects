@@ -1,9 +1,9 @@
 import { readFileSync, writeFileSync } from "fs";
-import { LSystem } from "../src/class/constraints/LSystem";
-import { Graph } from "../src/class/graph/Graph";
-import { TNodeGraphML, TEdgeGraphML } from "../src/class/graph/GraphTypes";
-import { MatrixMultiplyVector3x3, Create3DRotationMatrix3x3 } from "../src/class/math/SimpleMatrix";
-import { Vector } from "../src/class/math/Vector";
+import { LSystem } from "../src/constraints/LSystem";
+import { Graph } from "../src/graph/Graph";
+import { TNodeGraphML, TEdgeGraphML } from "../src/graph/GraphTypes";
+import { MatrixMultiplyVector3x3, Create3DRotationMatrix3x3 } from "../src/math/SimpleMatrix";
+import { Vector } from "../src/math/Vector";
 import { MConst } from "../src/MathUtils";
 
 export function TestLSystem() {

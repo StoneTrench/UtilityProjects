@@ -5,7 +5,7 @@ import {
 	IArrayLikeMapping,
 	MapFunction,
 	SHOULD_BREAK,
-} from "../../IArrayFunctions";
+} from "../IArrayFunctions";
 import { Vector } from "./Vector";
 
 export class TensorGrid<T> implements IArrayLikeMapping<T, Vector> {

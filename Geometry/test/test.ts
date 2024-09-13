@@ -9,7 +9,7 @@ TestSimpleMatrix();
 TestMatrix();
 TestVector();
 
-// TestPathfinderWFC();
+TestPathfinderWFC();
 
 
 TestRasterizer();

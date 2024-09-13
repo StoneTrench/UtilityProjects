@@ -1,22 +1,22 @@
-import { WrapGet, InsertIntoArray } from "../ArrayUtils";
+import { InsertIntoArray, WrapGet } from "./ArrayUtils";
 import {
-	IArrayLikeMapping,
-	IArrayLikeStack,
-	IArrayLikeFiltering,
-	ReduceFunction,
-	IArrayLikeHelper,
-	PredicateFunction,
-	IArrayLike,
-	MapFunction,
-	ForEachFunction,
 	BreakPredicateFunction,
-	SHOULD_BREAK,
+	ForEachFunction,
+	IArrayLike,
 	IArrayLikeComparison,
 	IArrayLikeDelete,
+	IArrayLikeFiltering,
+	IArrayLikeHelper,
+	IArrayLikeMapping,
 	IArrayLikeSearch,
-} from "../IArrayFunctions";
-import { WrapIndex } from "../MathUtils";
-import { Segment } from "../Segment";
+	IArrayLikeStack,
+	MapFunction,
+	PredicateFunction,
+	ReduceFunction,
+	SHOULD_BREAK,
+} from "./IArrayFunctions";
+import { WrapIndex } from "./MathUtils";
+import { Segment } from "./Segment";
 import { Vector } from "./math/Vector";
 
 const ERROR_INCORRECT_DIMENSIONS = "You can only have 2D vectors in a polygon!";

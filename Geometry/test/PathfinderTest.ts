@@ -1,10 +1,10 @@
 import { writeFileSync } from "fs";
-import { Benchmark, BenchmarkSilent } from "../src/class/benchmark/Benchmark";
-import { Goals } from "../src/class/constraints/Goals";
-import { Pathfinder } from "../src/class/constraints/Pathfinder";
-import { Grid } from "../src/class/grid/Grid";
-import { Vector } from "../src/class/math/Vector";
-import { Graph } from "../src/class/graph/Graph";
+import { Benchmark, BenchmarkSilent } from "../src/benchmark/Benchmark";
+import { Goals } from "../src/constraints/Goals";
+import { Pathfinder } from "../src/constraints/Pathfinder";
+import { Grid } from "../src/grid/Grid";
+import { Vector } from "../src/math/Vector";
+import { Graph } from "../src/graph/Graph";
 
 export async function TestPathfinderWFC() {
 	console.log("Pathfinder WFC test started!");
@@ -129,10 +129,10 @@ export async function TestPathfinderWFC() {
 
 		if (path.lastState != undefined) {
 			const debugGrid = new Grid<string>("  ");
-			debugGrid.setValues(
+			debugGrid.forVolume(
 				new Vector(0, 0),
 				goal.size.mapClone((e) => e - 1),
-				"  "
+				(_, p, s) => s.set(p, "  ")
 			);
 			debugGrid.forEach((_, p) => {
 				const hash = new Vector(p.x, p.y).toString();

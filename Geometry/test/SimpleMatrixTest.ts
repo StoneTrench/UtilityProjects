@@ -4,8 +4,8 @@ import {
 	MatrixMultiplyVector4x4,
 	MultiplyMatrix4x4,
 	PrintMatrix4x4,
-} from "../src/class/math/SimpleMatrix";
-import { Vector } from "../src/class/math/Vector";
+} from "../src/math/SimpleMatrix";
+import { Vector } from "../src/math/Vector";
 import { MConst } from "../src/MathUtils";
 
 export function TestSimpleMatrix() {

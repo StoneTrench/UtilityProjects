@@ -6,7 +6,7 @@ import {
     IArrayLikeMapping,
     MapFunction,
     SHOULD_BREAK,
-} from "../../IArrayFunctions";
+} from "../IArrayFunctions";
 import { Vector } from "../math/Vector";
 import { Color } from "./Color";
 
