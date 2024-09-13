@@ -6,8 +6,11 @@ export * from "./src/GenerateUUID";
 export * from "./src/Segment";
 export * from "./src/BoundingBox";
 
-export * from "./src/class/Grid3D";
 export * from "./src/class/Polygon";
+
+export * from "./src/class/grid/Grid";
+export * from "./src/class/grid/GridHelper";
+export * from "./src/class/grid/Neighbours";
 
 export * from "./src/class/graph/Graph";
 export * from "./src/class/graph/GraphTypes";

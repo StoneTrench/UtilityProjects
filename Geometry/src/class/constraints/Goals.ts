@@ -1,4 +1,4 @@
-import { Grid } from "../Grid3D";
+import { Grid } from "../grid/Grid";
 import { Vector } from "../math/Vector";
 import { Pathfinder } from "./Pathfinder";
 

@@ -67,4 +67,5 @@ export namespace MConst {
 	 * @constant {number} phi - The golden ratio.
 	 */
 	export const phi = 1.618033988749894;
+	export const tau = MConst.rad360;
 }

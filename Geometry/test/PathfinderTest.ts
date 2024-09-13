@@ -2,7 +2,7 @@ import { writeFileSync } from "fs";
 import { Benchmark, BenchmarkSilent } from "../src/class/benchmark/Benchmark";
 import { Goals } from "../src/class/constraints/Goals";
 import { Pathfinder } from "../src/class/constraints/Pathfinder";
-import { Grid } from "../src/class/Grid3D";
+import { Grid } from "../src/class/grid/Grid";
 import { Vector } from "../src/class/math/Vector";
 import { Graph } from "../src/class/graph/Graph";
 
@@ -139,7 +139,7 @@ export async function TestPathfinderWFC() {
 				const tile = goal.tiles[path.lastState.values[hash]];
 				if (tile != undefined) debugGrid.set(p, tile.value);
 			});
-			debugGrid.alterGridPositions((e) => new Vector(e.x, 0, e.y)).print(0, false);
+			debugGrid.alterGridPositions((e) => new Vector(e.x, 0, e.y)).printY(0, false);
 		}
 
 		const outputGraph = new Graph<undefined, undefined>();

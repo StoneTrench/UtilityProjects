@@ -6,12 +6,10 @@ import {
 	BreakPredicateFunction,
 	SHOULD_BREAK,
 } from "../../IArrayFunctions";
-import { WrapIndex } from "../../MathUtils";
+import { MConst, WrapIndex } from "../../MathUtils";
 import { AdvancedMatrix } from "./AdvancedMatrix";
 
-const vectorElements = "xyzwabcdefgh";
-export type Axies = "x" | "y" | "z" | "w" | "a" | "b" | "c" | "d" | "e" | "f" | "g" | "h";
-const TAU = 6.28318530718;
+export type Axes = "x" | "y" | "z" | "w";
 
 /**
  * Represents a mathematical vector of variable size.
@@ -512,7 +510,7 @@ export class Vector implements IArrayLikeMapping<number, number> {
 	toArray() {
 		return [...this.values];
 	}
-	closestAxisVector() {
+	closestAxisUnit() {
 		const largest = this.map<[number, number, number]>((e, i) => [i, Math.abs(e), e]).reduce((prev, curr) =>
 			prev[1] > curr[1] ? prev : curr
 		);
@@ -528,7 +526,7 @@ export class Vector implements IArrayLikeMapping<number, number> {
 	getAngle2D(other: Vector) {
 		const dot = this.x * other.x + this.y * other.y;
 		const det = this.x * other.y - this.y * other.x;
-		return (Math.atan2(det, dot) + TAU) % TAU;
+		return (Math.atan2(det, dot) + MConst.rad360) % MConst.rad360;
 	}
 
 	hash() {

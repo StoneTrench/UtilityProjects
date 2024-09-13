@@ -1,4 +1,4 @@
-import { HashVector } from "./class/Grid3D";
+import { HashVector } from "./class/grid/Grid";
 import {Polygon} from "./class/Polygon";
 import { Graph } from "./class/graph/Graph";
 import { GraphSymbol } from "./class/graph/GraphTypes";
