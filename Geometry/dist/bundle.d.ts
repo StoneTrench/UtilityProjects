@@ -682,7 +682,7 @@ declare module "constraints/LSystem" {
         function ParseRules(str: string): Rule[];
     }
 }
-declare module "index" {
+declare module "geometry" {
     export * from "IArrayFunctions";
     export * from "MathUtils";
     export * from "ArrayUtils";
