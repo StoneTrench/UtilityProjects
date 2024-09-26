@@ -405,7 +405,7 @@ export class Grid<T>
 	}
 
 	copy(pos1: Vector, pos2: Vector) {
-		const result = new Grid<T>(this.defaultElement);
+		const result = new Grid<T>(this.defaultElement).setValueCloningFunction(this.cloningFunction);
 		this.forVolume(pos1, pos2, (v, p) => {
 			if (v === this.defaultElement) return;
 			result.set(p, v);

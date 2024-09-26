@@ -117,8 +117,8 @@ export class TensorGrid<T> implements IArrayLikeMapping<T, Vector> {
 		} else {
 			// So remember to handle vector dimensions correctly!
 			if (index.getDimensions() > this.min.getDimensions()) {
-				this.min.matchedDimensions(index.getDimensions());
-				this.max.matchedDimensions(index.getDimensions());
+				this.min.cloneWithDimensions(index.getDimensions());
+				this.max.cloneWithDimensions(index.getDimensions());
 			}
 
 			this.min = this.min.min(index);

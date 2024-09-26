@@ -222,7 +222,7 @@ export class Vector implements IArrayLikeMapping<number, number> {
 		// https://en.wikipedia.org/wiki/Seven-dimensional_cross_product
 
 		const size = other.getDimensions();
-		const self = this.getDimensions() != size ? this.matchedDimensions(size) : this;
+		const self = this.getDimensions() != size ? this.cloneWithDimensions(size) : this;
 
 		if (size <= 3) {
 			return new Vector(
@@ -517,7 +517,7 @@ export class Vector implements IArrayLikeMapping<number, number> {
 
 		return this.mapClone((e, i, s) => (largest[0] == i ? (largest[2] > 0 ? 1 : -1) : 0));
 	}
-	matchedDimensions(dimensions: number) {
+	cloneWithDimensions(dimensions: number) {
 		if (this.getDimensions() > dimensions) return new Vector(...this.values.slice(0, dimensions));
 		if (this.getDimensions() < dimensions)
 			return new Vector(...this.values.concat(new Array(dimensions - this.getDimensions()).fill(0)));

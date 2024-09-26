@@ -1,25 +1,30 @@
-import Jimp from "jimp";
 import {
-    BreakPredicateFunction,
-    ForEachFunction,
-    IArrayLikeHelper,
-    IArrayLikeMapping,
-    MapFunction,
-    SHOULD_BREAK,
+	BreakPredicateFunction,
+	ForEachFunction,
+	IArrayLikeHelper,
+	IArrayLikeMapping,
+	MapFunction,
+	SHOULD_BREAK,
 } from "../IArrayFunctions";
 import { Vector } from "../math/Vector";
 import { Color } from "./Color";
+
+export type Bitmap = {
+	width: number;
+	height: number;
+	data: Buffer;
+}
 
 export class Image implements IArrayLikeMapping<Color, Vector> {
 	private pixels: { [hash: number]: Color };
 	private size: Vector;
 
-	constructor(size: Vector) {
+	constructor(w: number, h: number) {
 		this.pixels = {};
-		this.size = size.clone();
+		this.size = new Vector(w, h);
 	}
 	mapClone<t>(func: MapFunction<Color, Vector, t, this>): Image {
-		return IArrayLikeHelper.MapClone(this, new Image(this.size), func);
+		return IArrayLikeHelper.MapClone(this, new Image(this.size.x, this.size.y), func);
 	}
 	map<t>(func: MapFunction<Color, Vector, t, this>): t[] {
 		return IArrayLikeHelper.Map(this, func);
@@ -46,13 +51,17 @@ export class Image implements IArrayLikeMapping<Color, Vector> {
 		return this.pixels[index.hash()];
 	}
 	set(index: Vector, value: Color): this {
+		index = index.cloneWithDimensions(2)
 		this.pixels[index.hash()] = value;
 		return this;
 	}
 
-	static async readFile(filePath: string) {
-		const bitmap = (await Jimp.read(filePath)).bitmap;
-		const image = new Image(new Vector(bitmap.width, bitmap.height));
+	getSize() {
+		return this.size.clone();
+	}
+
+	static async fromBitmap(bitmap: Bitmap){
+		const image = new Image(bitmap.width, bitmap.height);
 		for (let y = 0; y < bitmap.height; y++) {
 			for (let x = 0; x < bitmap.width; x++) {
 				const idx = (y * bitmap.width + x) * 4;

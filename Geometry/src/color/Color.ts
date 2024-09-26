@@ -69,4 +69,7 @@ export class Color implements IArrayLikeMapping<number, ColorChannels> {
 	scale(scalar: number) {
 		return this.mapClone((e, i) => e * scalar);
 	}
+	multiply(scalar: Color) {
+		return this.mapClone((e, i) => e * scalar.get(i));
+	}
 }

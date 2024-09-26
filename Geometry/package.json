@@ -1,13 +1,19 @@
 {
 	"name": "geometry",
 	"version": "1.0.0",
-	"main": "index.ts",
+	"main": "./src/index.ts",
+	"type": "module",
 	"dependencies": {
-		"jimp": "^0.22.12",
 		"xmlbuilder2": "^3.1.1"
 	},
 	"devDependencies": {
-		"@types/node": "v20.40.2"
+		"@types/node": "^20.16.9",
+		"tsx": "^4.19.1",
+		"uglify-js": "^3.19.3"
+	},
+	"scripts": {
+		"test": "npx tsx test/test.ts",
+		"build": "tsc && uglifyjs --compress --mangle --output \"dist/bundle.min.js\" -- \"dist/bundle.js\""
 	},
 	"author": "StoneTrench",
 	"license": "ISC",

@@ -136,7 +136,7 @@ export async function TestPathfinderWFC() {
 			);
 			debugGrid.forEach((_, p) => {
 				const hash = new Vector(p.x, p.y).toString();
-				const tile = goal.tiles[path.lastState.values[hash]];
+				const tile = goal.tiles[path.lastState!.values[hash]];
 				if (tile != undefined) debugGrid.set(p, tile.value);
 			});
 			debugGrid.alterGridPositions((e) => new Vector(e.x, 0, e.y)).printY(0, false);
