@@ -1,8 +1,8 @@
+import { GOAP } from "../geometry";
 import { HashVector } from "../grid/Grid";
 import { Vector } from "../math/Vector";
 import { Polygon } from "../Polygon";
-import { Graph } from "./Graph";
-import { GraphSymbol } from "./GraphTypes";
+import { Graph, GraphEdge, GraphNode, GraphSymbol } from "./Graph";
 
 export namespace GraphHelper {
 	export function GraphFromSegments(segments: [Vector, Vector][], error: number = 0.05) {
@@ -80,5 +80,21 @@ export namespace GraphHelper {
 		}
 
 		return polygons;
+	}
+	export function FlipEdge(graph: Graph<any, any>, edge: GraphEdge<any>) {
+		graph.removeEdge(edge);
+		graph.addEdge(edge.to, edge.from, edge.data);
+	}
+
+	export function GetNeighbors<t1, t2>(node: GraphNode<t1, t2>) {
+		return node.incoming
+			.map((e) => e.from)
+			.concat(node.outgoing.map((e) => e.to))
+			.filter(function (item, pos, self) {
+				return self.indexOf(item) == pos;
+			});
+	}
+	export function GetAllEdges<t1, t2>(node: GraphNode<t1, t2>) {
+		return node.incoming.concat(node.outgoing)
 	}
 }

@@ -67,5 +67,9 @@ export namespace MConst {
 	 * @constant {number} phi - The golden ratio.
 	 */
 	export const phi = 1.618033988749894;
+	/**
+	 * @constant {number} sqrt_2 - The square root of 2.
+	 */
+	export const sqrt_2 = 1.4142135623730950488016887242097;
 	export const tau = MConst.rad360;
 }

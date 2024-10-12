@@ -97,7 +97,7 @@ export namespace GridHelper {
 	 * @returns {Grid<T>} - Returns the updated grid after rotation.
 	 */
 	export function RotateCCW_YAxis<T>(grid: Grid<T>) {
-		return grid.alterGridPositions((p) => new Vector(p.z, p.y, -p.x)).realign();
+		return grid.alterGridPositions((p) => new Vector(p.z, p.y, -p.x));
 	}
 
 	/**
@@ -105,7 +105,7 @@ export namespace GridHelper {
 	 * @returns {Grid<T>} - Returns the updated grid after rotation.
 	 */
 	export function RotateCW_YAxis<T>(grid: Grid<T>) {
-		return grid.alterGridPositions((p) => new Vector(-p.z, p.y, p.x)).realign();
+		return grid.alterGridPositions((p) => new Vector(-p.z, p.y, p.x));
 	}
 
 	/**
@@ -113,7 +113,7 @@ export namespace GridHelper {
 	 * @returns {Grid<T>} - Returns the updated grid after rotation.
 	 */
 	export function Rotate180_YAxis<T>(grid: Grid<T>) {
-		return grid.alterGridPositions((p) => new Vector(-p.x, p.y, -p.z)).realign();
+		return grid.alterGridPositions((p) => new Vector(-p.x, p.y, -p.z));
 	}
 
 	/**
@@ -132,6 +132,15 @@ export namespace GridHelper {
 	export function FlipZ_YAxis<T>(grid: Grid<T>) {
 		const size = grid.getSize().offset(-1, -1, -1);
 		return grid.alterGridPositions((p) => new Vector(p.x, p.y, size.z - p.z));
+	}
+
+	/**
+	 * Flips the grid along the Y-axis.
+	 * @returns {Grid<T>} - Returns the updated grid after flipping.
+	 */
+	export function FlipY_ZAxis<T>(grid: Grid<T>) {
+		const size = grid.getSize().offset(-1, -1, -1);
+		return grid.alterGridPositions((p) => new Vector(p.x, size.y - p.y, p.z));
 	}
 
 	/**

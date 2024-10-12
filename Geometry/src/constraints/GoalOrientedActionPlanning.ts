@@ -1,15 +1,17 @@
-import { GraphSymbol } from "../graph/GraphTypes";
+import { GraphSymbol } from "../graph/Graph";
 
-export namespace Pathfinder {
+export namespace GOAP {
+	export type Status = "success" | "failure"
 	export type ActionSymbol = string;
 	export type Action<T> = {
 		id: ActionSymbol;
 		onCallAlteration: (current_state: T) => T;
 		cost: number;
 	};
-	export type PathResult<T> = {
-		actions?: ActionSymbol[];
-		lastState?: T;
+	export type PlanResult<T> = {
+		status: Status;
+		actions: ActionSymbol[];
+		lastState: T;
 		edges: Map<GraphSymbol, [GraphSymbol, ActionSymbol][]>;
 	};
 	export interface Goal<T> {
@@ -23,7 +25,7 @@ export namespace Pathfinder {
 		HashState(state: T): string;
 	}
 
-	export function FindPath<T>(goal: Goal<T>): PathResult<T> {
+	export function FindPlan<T>(goal: Goal<T>): PlanResult<T> {
 		/**
 		 * Action space graph -> Nodes are states, edges are actions
 		 *
@@ -34,6 +36,23 @@ export namespace Pathfinder {
 		 * We take the action, it modifies the state
 		 * We return the new state, and start over
 		 */
+
+		const generateResult = (id: GraphSymbol, state: T, status: Status) => {
+			const result: ActionSymbol[] = [];
+			let curr = id;
+			while (true) {
+				const prev = cameFrom.get(curr);
+				if (prev == undefined) break;
+				result.unshift(actionSpace_edges.get(prev).find((e) => e[0] == curr)[1]);
+				curr = prev;
+			}
+			return {
+				status: status,
+				actions: result,
+				lastState: state,
+				edges: actionSpace_edges,
+			};
+		};
 
 		const actionSpace_edges = new Map<GraphSymbol, [GraphSymbol, ActionSymbol][]>();
 		const actionSpace_nodes = new Map<GraphSymbol, T>();
@@ -54,24 +73,17 @@ export namespace Pathfinder {
 		gCost.set(startId, 0);
 		// const get_fCost = (key: GraphSymbol) => fCost.get(key) ?? Number.POSITIVE_INFINITY;
 
+		let last_id = undefined;
+		let last_state = undefined;
+
 		while (openSet.length > 0) {
 			const current_id = openSet.reduce((a, b) => (fCost.get(a) < fCost.get(b) ? a : b));
 			const current_state = actionSpace_nodes.get(current_id);
+			last_id = current_id;
+			last_state = current_state;
 
 			if (goal.HasBeenReached(current_state)) {
-				const result: ActionSymbol[] = [];
-				let curr = current_id;
-				while (true) {
-					const prev = cameFrom.get(curr);
-					if (prev == undefined) break;
-					result.unshift(actionSpace_edges.get(prev).find((e) => e[0] == curr)[1]);
-					curr = prev;
-				}
-				return {
-					actions: result,
-					lastState: current_state,
-					edges: actionSpace_edges,
-				};
+				return generateResult(current_id, current_state, "success");
 			}
 
 			openSet.splice(openSet.indexOf(current_id), 1);
@@ -102,10 +114,6 @@ export namespace Pathfinder {
 			actionSpace_nodes.delete(current_id);
 		}
 
-		return {
-			lastState: undefined,
-			actions: undefined,
-			edges: actionSpace_edges,
-		};
+		return generateResult(last_id, last_state, "failure");
 	}
 }

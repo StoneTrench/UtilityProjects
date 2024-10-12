@@ -1,6 +1,6 @@
 import { GenerateTimestampID } from "../GenerateUUID";
 import { Graph } from "../graph/Graph";
-import { TNodeGraphML, TEdgeGraphML } from "../graph/GraphTypes";
+import { TNodeGraphML, TEdgeGraphML } from "../graph/Graph";
 import { Vector } from "../math/Vector";
 
 /**

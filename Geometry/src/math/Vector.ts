@@ -103,10 +103,12 @@ export class Vector implements IArrayLikeMapping<number, number> {
 	 * @param error - The acceptable error margin for comparison.
 	 * @returns Whether the vectors are equal.
 	 */
-	equals(other: Vector, error: number = 0): boolean {
-		if (other == undefined) return false;
-		if (this.getDimensions() !== other.getDimensions()) return false;
-		return this.values.every((e, i) => Math.abs(e - other.get(i)) <= error);
+	equals(other: any, error: number = 0): boolean {
+		return (
+			other instanceof Vector &&
+			this.getDimensions() === other.getDimensions() &&
+			this.values.every((e, i) => Math.abs(e - other.get(i)) <= error)
+		);
 	}
 
 	/**
@@ -476,7 +478,7 @@ export class Vector implements IArrayLikeMapping<number, number> {
 	 * @param vec - An object with x, y, and z properties.
 	 * @returns A new vector created from the input object.
 	 */
-	static fromVec3(vec: { x: number, y: number, z: number }): Vector {
+	static fromVec3(vec: { x: number; y: number; z: number }): Vector {
 		return new Vector(vec.x, vec.y, vec.z);
 	}
 

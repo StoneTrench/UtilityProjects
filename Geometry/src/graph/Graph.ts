@@ -10,7 +10,44 @@ import {
 	ReduceFunction,
 	SHOULD_BREAK,
 } from "../IArrayFunctions";
-import { GraphEdge, GraphNode, GraphSymbol } from "./GraphTypes";
+
+export type GraphSymbol = string | number | symbol;
+
+export type EdgeSymbol = number;
+
+export type GraphEdge<T> = {
+	id: EdgeSymbol;
+	from: GraphSymbol;
+	to: GraphSymbol;
+	data: T;
+};
+
+export type GraphNode<TNode, TEdge> = {
+	id: GraphSymbol;
+	data: TNode;
+	incoming: GraphEdge<TEdge>[];
+	outgoing: GraphEdge<TEdge>[];
+};
+
+export type TNodeGraphML = {
+	label?: string;
+	shape?: "rectangle" | "hexagon" | "ellipse" | "roundrectangle"; // Optional with default
+	alignment?: "center" | "left" | "right";
+	fillColor?: string; // Optional color
+	borderColor?: string; // Optional border color
+	x?: number;
+	y?: number;
+	width?: number;
+	height?: number;
+};
+export type TEdgeGraphML = {
+	label?: string;
+	fillColor?: string;
+	borderColor?: string;
+	type?: "line" | "dashed";
+	width?: number;
+	arrows?: { source?: "none" | "standard"; target?: "none" | "standard" }; // Optional arrow styles
+};
 
 export class Graph<TNode, TEdge>
 	implements IArrayLikeFiltering<GraphNode<TNode, TEdge>, GraphSymbol>, IArrayLikeMapping<GraphNode<TNode, TEdge>, GraphSymbol>
@@ -53,6 +90,12 @@ export class Graph<TNode, TEdge>
 
 		if (value.id == undefined) throw new Error(`Node must have an id value! Got: ${value}`);
 
+		const outgoingLength = exists?.outgoing.length ?? 0;
+		const incomingLength = exists?.incoming.length ?? 0;
+
+		if (outgoingLength > 0) value.outgoing.forEach((e) => (e.id += outgoingLength));
+		if (incomingLength > 0) value.incoming.forEach((e) => (e.id += incomingLength));
+
 		this.nodes.set(index, {
 			id: value.id,
 			data: value.data,
@@ -77,12 +120,12 @@ export class Graph<TNode, TEdge>
 			throw new Error("Both nodes must exist in the network!");
 		}
 
-		fromNode.outgoing.some((edge) => edge.to === to);
-		if (fromNode.outgoing.some((edge) => edge.to === to)) {
-			return this; // Edge already exists
-		}
+		// if (fromNode.outgoing.some((edge) => edge.to === to)) {
+		// 	return this; // Edge already exists
+		// }
+		const prevId = fromNode.outgoing[fromNode.outgoing.length - 1]?.id ?? -1;
 
-		const newEdge: GraphEdge<TEdge> = { from, to, data };
+		const newEdge: GraphEdge<TEdge> = { id: prevId + 1, from, to, data };
 
 		fromNode.outgoing.push(newEdge);
 		toNode.incoming.push(newEdge);
@@ -90,21 +133,48 @@ export class Graph<TNode, TEdge>
 	}
 
 	getEdge(from: GraphSymbol, to: GraphSymbol) {
-		return this.get(from)?.outgoing.find((e) => e.to == to);
+		return this.get(from)?.outgoing.find((e) => e.to === to);
 	}
 
-	removeEdge(from: GraphSymbol, to: GraphSymbol) {
-		const fromNode = this.nodes.get(from);
-		const toNode = this.nodes.get(to);
-		if (fromNode === undefined || toNode === undefined) {
-			return this;
+	getEdges(from: GraphSymbol, to: GraphSymbol) {
+		return this.get(from)?.outgoing.filter((e) => e.to == to);
+	}
+
+	removeEdge(edge: GraphEdge<TEdge>): this;
+	removeEdge(from: GraphSymbol, to: GraphSymbol): this;
+	removeEdge(arg1: GraphSymbol | GraphEdge<TEdge>, arg2?: GraphSymbol) {
+		if (arg2 != undefined) {
+			const from = arg1 as GraphSymbol;
+			const to = arg2 as GraphSymbol;
+
+			const fromNode = this.nodes.get(from);
+			const toNode = this.nodes.get(to);
+			if (fromNode === undefined || toNode === undefined) {
+				return this;
+			}
+
+			const indexOut = fromNode.outgoing.findIndex((e) => e.to === to);
+			const indexIn = toNode.incoming.findIndex((e) => e.from === from);
+
+			if (indexOut != -1) fromNode.outgoing.splice(indexOut, 1);
+			if (indexIn != -1) toNode.incoming.splice(indexIn, 1);
+		} else if (arg1["from"] !== undefined && arg1["to"] !== undefined) {
+			const edge = arg1 as GraphEdge<TEdge>;
+			const from = edge.from;
+			const to = edge.to;
+
+			const fromNode = this.nodes.get(from);
+			const toNode = this.nodes.get(to);
+			if (fromNode === undefined || toNode === undefined) {
+				return this;
+			}
+
+			const indexOut = fromNode.outgoing.findIndex((e) => e.to === to && e.id === edge.id);
+			const indexIn = toNode.incoming.findIndex((e) => e.from === from && e.id === edge.id);
+
+			if (indexOut != -1) fromNode.outgoing.splice(indexOut, 1);
+			if (indexIn != -1) toNode.incoming.splice(indexIn, 1);
 		}
-
-		const indexOut = fromNode.outgoing.findIndex((edge) => edge.to === to);
-		const indexIn = toNode.incoming.findIndex((edge) => edge.from === from);
-
-		if (indexOut != -1) fromNode.outgoing.splice(indexOut, 1);
-		if (indexIn != -1) toNode.incoming.splice(indexIn, 1);
 		return this;
 	}
 
@@ -112,22 +182,14 @@ export class Graph<TNode, TEdge>
 		const node = this.nodes.get(id);
 
 		node.outgoing.forEach((edge) => {
-			this.removeEdge(edge.from, edge.to);
+			this.removeEdge(edge);
 		});
 		node.incoming.forEach((edge) => {
-			this.removeEdge(edge.from, edge.to);
+			this.removeEdge(edge);
 		});
 
 		this.nodes.delete(id);
 		return this;
-	}
-
-	getOutgoingNeighbors(id: GraphSymbol): GraphEdge<TEdge>[] | undefined {
-		return this.nodes.get(id)?.outgoing;
-	}
-
-	getIncomingNeighbors(id: GraphSymbol): GraphEdge<TEdge>[] | undefined {
-		return this.nodes.get(id)?.incoming;
 	}
 
 	printNetwork() {

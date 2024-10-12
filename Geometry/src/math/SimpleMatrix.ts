@@ -1,5 +1,12 @@
 import { Vector } from "./Vector";
 
+export type Matrix2x2 = {
+	m11: number;
+	m12: number;
+
+	m21: number;
+	m22: number;
+};
 export type Matrix3x3 = {
 	m11: number;
 	m12: number;
@@ -35,6 +42,9 @@ export type Matrix4x4 = {
 	m44: number;
 };
 
+export function MatrixMultiplyVector2x2(vec: Vector, mat: Matrix2x2) {
+	return new Vector(vec.x * mat.m11 + vec.y * mat.m12, vec.x * mat.m21 + vec.y * mat.m22);
+}
 export function MatrixMultiplyVector3x3(vec: Vector, mat: Matrix3x3) {
 	return new Vector(
 		vec.x * mat.m11 + vec.y * mat.m12 + vec.z * mat.m13,
@@ -51,7 +61,7 @@ export function MatrixMultiplyVector4x4(vec: Vector, mat: Matrix4x4) {
 	);
 }
 
-export function MultiplyMatrix4x4(a: Matrix4x4, b: Matrix4x4): Matrix4x4 {
+export function MatrixMultiplyMatrix4x4(a: Matrix4x4, b: Matrix4x4): Matrix4x4 {
 	return {
 		m11: a.m11 * b.m11 + a.m12 * b.m21 + a.m13 * b.m31 + a.m14 * b.m41,
 		m12: a.m11 * b.m12 + a.m12 * b.m22 + a.m13 * b.m32 + a.m14 * b.m42,
@@ -75,6 +85,14 @@ export function MultiplyMatrix4x4(a: Matrix4x4, b: Matrix4x4): Matrix4x4 {
 	};
 }
 
+export function ArrayToMatrix2x2(matrix: number[][]): Matrix2x2 {
+	return {
+		m11: matrix[0][0],
+		m12: matrix[0][1],
+		m21: matrix[1][0],
+		m22: matrix[1][1],
+	};
+}
 export function ArrayToMatrix3x3(matrix: number[][]): Matrix3x3 {
 	return {
 		m11: matrix[0][0],
@@ -111,6 +129,17 @@ export function ArrayToMatrix4x4(matrix: number[][]): Matrix4x4 {
 		m44: matrix[3][3],
 	};
 }
+
+export function Create2DRotationMatrix2x2(z: number): Matrix2x2 {
+	const cos = Math.cos(z);
+	const sin = Math.sin(z);
+
+	return ArrayToMatrix2x2([
+		[cos, -sin],
+		[sin, cos],
+	]);
+}
+
 export function Create3DRotationMatrix3x3(x: number, y: number, z: number): Matrix3x3 {
 	const ca = Math.cos(z);
 	const cb = Math.cos(y);

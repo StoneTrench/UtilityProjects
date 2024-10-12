@@ -1,7 +1,7 @@
 {
 	"name": "geometry",
 	"version": "1.0.0",
-	"main": "./dist/bundle.js",
+	"main": "./src/geometry.ts",
 	"type": "module",
 	"dependencies": {
 		"xmlbuilder2": "^3.1.1"

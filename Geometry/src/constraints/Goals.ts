@@ -1,9 +1,9 @@
 import { Grid } from "../grid/Grid";
 import { Vector } from "../math/Vector";
-import { Pathfinder } from "./Pathfinder";
+import { GOAP } from "./GoalOrientedActionPlanning";
 
 export namespace Goals {
-	export class Goal2D implements Pathfinder.Goal<Vector> {
+	export class Goal2D implements GOAP.Goal<Vector> {
 		private target: Vector;
 		private start: Vector;
 		private world: Grid<number>;
@@ -15,7 +15,7 @@ export namespace Goals {
 			this.world = world;
 		}
 		startingState: Vector;
-		actions: Pathfinder.Action<Vector>[] = [
+		actions: GOAP.Action<Vector>[] = [
 			{
 				id: "up",
 				cost: 0,
@@ -58,10 +58,10 @@ export namespace Goals {
 			},
 		];
 
-		ActionHeuristic(current_state: Vector, next_state: Vector, action?: Pathfinder.Action<Vector>): number {
+		ActionHeuristic(current_state: Vector, next_state: Vector, action?: GOAP.Action<Vector>): number {
 			return this.target.minus(next_state).lengthMax() - this.start.minus(next_state).lengthMax() / 2;
 		}
-		CanTakeAction(current_state: Vector, next_state: Vector, action?: Pathfinder.Action<Vector>): boolean {
+		CanTakeAction(current_state: Vector, next_state: Vector, action?: GOAP.Action<Vector>): boolean {
 			if (this.world.get(next_state) == 1) return false;
 			return true;
 		}
@@ -77,10 +77,10 @@ export namespace Goals {
 		values: { [hash: number]: number };
 		counter: number;
 		cursor: Vector;
-		superPositions: Pathfinder.ActionSymbol[];
+		superPositions: GOAP.ActionSymbol[];
 	};
 	type GoalTileWFC = { value: string; edges: string[]; id: string };
-	export class GoalWFC implements Pathfinder.Goal<GoalStateWFC> {
+	export class GoalWFC implements GOAP.Goal<GoalStateWFC> {
 		/**
 		 * 	State
 		 * 		Has a map of the
@@ -156,12 +156,12 @@ export namespace Goals {
 		tiles: GoalTileWFC[] = [];
 
 		startingState: GoalStateWFC;
-		actions: Pathfinder.Action<GoalStateWFC>[] = [];
+		actions: GOAP.Action<GoalStateWFC>[] = [];
 
-		ActionHeuristic(current_state: GoalStateWFC, next_state: GoalStateWFC, action?: Pathfinder.Action<GoalStateWFC>): number {
+		ActionHeuristic(current_state: GoalStateWFC, next_state: GoalStateWFC, action?: GOAP.Action<GoalStateWFC>): number {
 			return Math.random() - next_state.counter * 5;
 		}
-		CanTakeAction(current_state: GoalStateWFC, next_state: GoalStateWFC, action?: Pathfinder.Action<GoalStateWFC>): boolean {
+		CanTakeAction(current_state: GoalStateWFC, next_state: GoalStateWFC, action?: GOAP.Action<GoalStateWFC>): boolean {
 			return current_state.superPositions.includes(action.id);
 		}
 		HasBeenReached(state: GoalStateWFC): boolean {
