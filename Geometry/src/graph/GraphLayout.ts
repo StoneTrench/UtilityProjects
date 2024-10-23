@@ -1,4 +1,4 @@
-import { Create2DRotationMatrix2x2, GOAP, GraphHelper, MatrixMultiplyVector2x2, MConst, Vector } from "../geometry";
+import { GOAP, GraphHelper, MConst, SortGreatestToCenter, SwapElements, Vector } from "../geometry";
 import { Graph, GraphSymbol } from "./Graph";
 
 export namespace GraphLayout {
@@ -115,18 +115,16 @@ export namespace GraphLayout {
 		ActionHeuristic(current_state: LayoutState, next_state: LayoutState, action?: GOAP.Action<LayoutState>): number {
 			return (
 				next_state.childQueue.length +
-				(next_state.childQueue[0]?.conn.length ?? -1) +
+				(next_state.childQueue[0]?.conn.length ?? 0) +
 				(this.doesOverlap(next_state) ? 10 : -10) +
 				this.getArea(next_state)
 			);
 		}
 		CanTakeAction(current_state: LayoutState, next_state: LayoutState, action?: GOAP.Action<LayoutState>): boolean {
-			if (this.HashState(current_state) === this.HashState(next_state)) return false;
-
+			// if (this.HashState(current_state) === this.HashState(next_state)) return false;
 			return true;
 		}
 		HasBeenReached(current_state: LayoutState): boolean {
-			console.log(current_state.childQueue.map((e) => e.id).join(", "));
 			if (current_state.childQueue.length > 1) return false;
 			if (current_state.childQueue.length > 0 && current_state.childQueue[0].conn.length > 0) return false;
 			if (this.doesHaveOverlap(current_state)) return false;
@@ -135,31 +133,128 @@ export namespace GraphLayout {
 		HashState(state: LayoutState): string {
 			return `${state.childQueue.length}|${state.direction}|${Array.from(state.positions.entries())
 				.map((e) => e[0]?.toString() + e[1]?.toString())
-				// .sort()
+				.sort()
 				.join(",")}`;
 		}
 	}
 
-	export function LayoutOrthogonal(graph: Graph<any, any>, stepSize: number) {
+	export function OrthogonalGOAP(graph: Graph<any, any>, stepSize: number): Map<GraphSymbol, Vector> {
 		const result = GOAP.FindPlan(new LayoutGoal(graph, stepSize));
-		// writeFileSync(
-		// 	"./debug_layout_graph.graphml",
-		// 	Array.from(result.edges.entries())
-		// 		.reduce((res, e) => {
-		// 			res.addNode(e[0], { label: e[0] as any });
-		// 			// console.log("debugger", e);
-
-		// 			e[1].forEach((n) => {
-		// 				res.addNode(n[0], { label: n[0] as any });
-		// 				res.addEdge(e[0], n[0], { label: n[1] });
-		// 			});
-
-		// 			return res;
-		// 		}, new Graph<TNodeGraphML, TEdgeGraphML>())
-		// 		.exportToGraphML()
-		// );
-		console.log("GOAP STATUS", result.status, result.actions);
-
 		return result.lastState.positions;
+	}
+
+	// Evaluate edge crossing between two edges
+	function EvaluateEdgeCrossing(edge1, edge2) {
+		if (edge1[0] < edge2[0] && edge1[1] > edge2[1]) {
+			return true;
+		} else if (edge1[0] > edge2[0] && edge1[1] < edge2[1]) {
+			return true;
+		}
+		return false;
+	}
+	// Heuristic to minimize edge crossings within each rank
+	function MinimizeEdgeCrossings(rankGroup: [GraphSymbol, number][]) {
+		// THIS CODE WAS WRITTEN BY CHAT GPT, PLEASE BEWARE
+		let hasImproved = true;
+		const maxIterations = 10; // Maximum number of times to repeat the process
+		let iterations = 0;
+
+		while (hasImproved && iterations < maxIterations) {
+			hasImproved = false;
+			iterations++;
+
+			for (let i = 0; i < rankGroup.length - 1; i++) {
+				const currentNode = rankGroup[i];
+				const nextNode = rankGroup[i + 1];
+
+				// Count current crossings
+				let currentCrossings = 0;
+				for (let j = 0; j < rankGroup.length; j++) {
+					if (j !== i && j !== i + 1) {
+						const otherNode = rankGroup[j];
+						if (EvaluateEdgeCrossing([i, currentNode[1]], [j, otherNode[1]])) {
+							currentCrossings++;
+						}
+						if (EvaluateEdgeCrossing([i + 1, nextNode[1]], [j, otherNode[1]])) {
+							currentCrossings++;
+						}
+					}
+				}
+
+				// Swap nodes and evaluate new crossings
+				[rankGroup[i], rankGroup[i + 1]] = [rankGroup[i + 1], rankGroup[i]];
+				let newCrossings = 0;
+				for (let j = 0; j < rankGroup.length; j++) {
+					if (j !== i && j !== i + 1) {
+						const otherNode = rankGroup[j];
+						if (EvaluateEdgeCrossing([i, rankGroup[i][1]], [j, otherNode[1]])) {
+							newCrossings++;
+						}
+						if (EvaluateEdgeCrossing([i + 1, rankGroup[i + 1][1]], [j, otherNode[1]])) {
+							newCrossings++;
+						}
+					}
+				}
+
+				// If the new arrangement reduces crossings, keep it; otherwise, revert
+				if (newCrossings < currentCrossings) {
+					hasImproved = true;
+				} else {
+					// Revert the swap
+					[rankGroup[i], rankGroup[i + 1]] = [rankGroup[i + 1], rankGroup[i]];
+				}
+			}
+		}
+	}
+
+	export function Ranked(
+		graph: Graph<any, any>,
+		stepSize: number,
+		placementMode?: "middle" | "low_middle_bias"
+	): Map<GraphSymbol, Vector> {
+		// https://crinkles.dev/writing/auto-graph-layout-algorithm
+		const result = new Map<GraphSymbol, Vector>();
+
+		// Choose initial node
+		const nodes = [...graph.values()];
+		// Rank nodes (shortest distance (in n number of edges to initial node) length)
+		const distanceMap = GraphHelper.CalculateShortestEdgeDistance(graph, nodes[0].id);
+		const rankGroups: [GraphSymbol, number][][] = [];
+		for (const node of nodes) {
+			const rank = distanceMap.get(node.id);
+			rankGroups[rank] ??= [];
+			rankGroups[rank].push([node.id, node.incoming.length + node.outgoing.length]);
+		}
+		// Sort nodes in each rank, to minimize edge crossings
+
+		for (const group of rankGroups.values()) {
+			SortGreatestToCenter(group); // Sort it so the one with the most connections is at the center for aesthetics
+			MinimizeEdgeCrossings(group);
+		}
+
+		placementMode ??= "middle";
+
+		// Place nodes
+		switch (placementMode) {
+			case "middle":
+				for (const [rank, group] of rankGroups.entries()) {
+					const halfLen = group.length / 2;
+					for (const [index, [id, _]] of group.entries()) {
+						result.set(id, new Vector(rank, index - halfLen).scale(stepSize));
+					}
+				}
+				break;
+			case "low_middle_bias":
+				for (const [rank, group] of rankGroups.entries()) {
+					const middleIndex = Math.ceil(group.length / 2) - 1;
+					for (const [index, [id, _]] of group.entries()) {
+						const y = index - middleIndex;
+						result.set(id, new Vector(rank - Math.abs(y), y).scale(stepSize));
+					}
+				}
+				break;
+		}
+
+		return result;
 	}
 }

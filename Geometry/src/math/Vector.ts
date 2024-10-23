@@ -6,7 +6,7 @@ import {
 	BreakPredicateFunction,
 	SHOULD_BREAK,
 } from "../IArrayFunctions";
-import { MConst, WrapIndex } from "../MathUtils";
+import { MConst, WrapIndex } from "./MathUtils";
 import { AdvancedMatrix } from "./AdvancedMatrix";
 
 export type Axes = "x" | "y" | "z" | "w";

@@ -15,7 +15,7 @@ import {
 	ReduceFunction,
 	SHOULD_BREAK,
 } from "./IArrayFunctions";
-import { WrapIndex } from "./MathUtils";
+import { WrapIndex } from "./math/MathUtils";
 import { Segment } from "./Segment";
 import { Vector } from "./math/Vector";
 

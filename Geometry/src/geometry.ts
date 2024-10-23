@@ -1,5 +1,5 @@
 export * from "./IArrayFunctions";
-export * from "./MathUtils";
+export * from "./math/MathUtils";
 export * from "./ArrayUtils";
 export * from "./GenerateUUID";
 export * from "./Segment";

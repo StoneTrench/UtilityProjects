@@ -1,6 +1,8 @@
 export function Benchmark(name: string, iter: number, func: (...args: any[]) => any, ...args: any[]) {
 	console.log(`Benchmarking ${name}...`);
-	console.log(`Result: ${BenchmarkSilent(iter, func, ...args)} ms`);
+	BenchmarkSilent(iter, func, ...args).then((res) => {
+		console.log(`Result: ${res} ms`);
+	});
 }
 export function BenchmarkSilent(iter: number, func: (...args: any[]) => any, ...args: any[]) {
 	return new Promise<number>((resolve) => {

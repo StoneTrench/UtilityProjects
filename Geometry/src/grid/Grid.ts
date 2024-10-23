@@ -1,5 +1,5 @@
 import { IArrayLikeSearch, IArrayLikeDelete, SHOULD_BREAK, IArrayLikeHelper, IArrayLikeMapping } from "../IArrayFunctions";
-import { WrapVector } from "../MathUtils";
+import { WrapVector } from "../math/MathUtils";
 import { Axes, Vector } from "../math/Vector";
 
 /**

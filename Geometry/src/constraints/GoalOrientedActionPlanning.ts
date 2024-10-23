@@ -1,7 +1,7 @@
 import { GraphSymbol } from "../graph/Graph";
 
 export namespace GOAP {
-	export type Status = "success" | "failure"
+	export type Status = "success" | "failure" | "timeout";
 	export type ActionSymbol = string;
 	export type Action<T> = {
 		id: ActionSymbol;
@@ -25,7 +25,11 @@ export namespace GOAP {
 		HashState(state: T): string;
 	}
 
-	export function FindPlan<T>(goal: Goal<T>): PlanResult<T> {
+	export function FindPlan<T>(
+		goal: Goal<T>,
+		maxCycles?: number,
+		bestPlanCallback?: (state: T, heuristic: number) => void
+	): PlanResult<T> {
 		/**
 		 * Action space graph -> Nodes are states, edges are actions
 		 *
@@ -36,6 +40,8 @@ export namespace GOAP {
 		 * We take the action, it modifies the state
 		 * We return the new state, and start over
 		 */
+
+		maxCycles ??= Number.POSITIVE_INFINITY;
 
 		const generateResult = (id: GraphSymbol, state: T, status: Status) => {
 			const result: ActionSymbol[] = [];
@@ -82,6 +88,14 @@ export namespace GOAP {
 			last_id = current_id;
 			last_state = current_state;
 
+			if (bestPlanCallback !== undefined)
+				bestPlanCallback(current_state, fCost.get(current_id));
+
+			maxCycles--;
+			if (maxCycles <= 0) {
+				return generateResult(current_id, current_state, "timeout");
+			}
+
 			if (goal.HasBeenReached(current_state)) {
 				return generateResult(current_id, current_state, "success");
 			}
@@ -115,5 +129,14 @@ export namespace GOAP {
 		}
 
 		return generateResult(last_id, last_state, "failure");
+	}
+
+	export function ExecutePlan<T>(goal: Goal<T>, plan: ActionSymbol[]): PlanResult<T> {
+		return {
+			actions: plan,
+			edges: undefined,
+			lastState: plan.reduce((res, e) => goal.actions.find((a) => a.id === e).onCallAlteration(res), goal.startingState),
+			status: "success",
+		};
 	}
 }

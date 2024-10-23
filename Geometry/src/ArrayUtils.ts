@@ -1,4 +1,4 @@
-import { WrapIndex } from "./MathUtils";
+import { WrapIndex } from "./math/MathUtils";
 
 /**
  * Retrieves an element from an array using a potentially out-of-bounds index by wrapping it.
@@ -28,12 +28,38 @@ export function InsertIntoArray<T>(array: T[], index: number, element: T): T[] {
 }
 
 export function ArrayEquals<T>(arrayA: T[], arrayB: T[]) {
-    if (!(arrayA instanceof Array)) return false;
-    if (!(arrayB instanceof Array)) return false;
-    if (arrayA.length != arrayB.length) return false;
+	if (!(arrayA instanceof Array)) return false;
+	if (!(arrayB instanceof Array)) return false;
+	if (arrayA.length != arrayB.length) return false;
 
-    for (let i = 0; i < arrayA.length; i++) {        
-        if (arrayA[i] != arrayB[i]) return false;
-    }
-    return true;
+	for (let i = 0; i < arrayA.length; i++) {
+		if (arrayA[i] != arrayB[i]) return false;
+	}
+	return true;
+}
+
+/**
+ * Modifies the array in place.
+ * @param array
+ */
+export function SortGreatestToCenter<T>(array: [T, number][]) {
+	const sorted = array.splice(0).sort((a, b) => b[1] - a[1]);
+
+	let flag: boolean = false;
+	
+	for (const element of sorted) {
+		if (flag) array.push(element);
+		else array.unshift(element);
+
+		flag = !flag;
+	}
+
+	return array;
+}
+
+export function SwapElements<T>(array: T[], indexA: number, indexB: number) {
+	const elementA = array[indexA];
+	array[indexA] = array[indexB];
+	array[indexB] = elementA;
+	return array;
 }

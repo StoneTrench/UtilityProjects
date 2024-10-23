@@ -57,6 +57,13 @@ export class Graph<TNode, TEdge>
 	constructor() {
 		this.nodes = new Map();
 	}
+
+	values(){
+		return this.nodes.values()
+	}
+	keys(){
+		return this.nodes.keys()
+	}
 	//#region Interface
 	mapClone<t>(func: MapFunction<GraphNode<TNode, TEdge>, GraphSymbol, t, this>): Graph<TNode, TEdge> {
 		return IArrayLikeHelper.MapClone(this, new Graph<TNode, TEdge>(), func);
@@ -117,7 +124,7 @@ export class Graph<TNode, TEdge>
 		const fromNode = this.nodes.get(from);
 		const toNode = this.nodes.get(to);
 		if (fromNode === undefined || toNode === undefined) {
-			throw new Error("Both nodes must exist in the network!");
+			throw new Error(`Both nodes must exist in the network! ${from?.toString()} --> ${to?.toString()}`);
 		}
 
 		// if (fromNode.outgoing.some((edge) => edge.to === to)) {
@@ -142,38 +149,48 @@ export class Graph<TNode, TEdge>
 
 	removeEdge(edge: GraphEdge<TEdge>): this;
 	removeEdge(from: GraphSymbol, to: GraphSymbol): this;
-	removeEdge(arg1: GraphSymbol | GraphEdge<TEdge>, arg2?: GraphSymbol) {
+	removeEdge(arg1: GraphSymbol | GraphEdge<TEdge>, arg2?: GraphSymbol): this {
 		if (arg2 != undefined) {
 			const from = arg1 as GraphSymbol;
 			const to = arg2 as GraphSymbol;
 
 			const fromNode = this.nodes.get(from);
 			const toNode = this.nodes.get(to);
-			if (fromNode === undefined || toNode === undefined) {
+
+			if (!fromNode || !toNode) {
+				console.warn(`One or both nodes are missing: from ${from.toString()}, to ${to.toString()}`);
 				return this;
 			}
 
 			const indexOut = fromNode.outgoing.findIndex((e) => e.to === to);
 			const indexIn = toNode.incoming.findIndex((e) => e.from === from);
 
-			if (indexOut != -1) fromNode.outgoing.splice(indexOut, 1);
-			if (indexIn != -1) toNode.incoming.splice(indexIn, 1);
-		} else if (arg1["from"] !== undefined && arg1["to"] !== undefined) {
+			if (indexOut > -1) fromNode.outgoing.splice(indexOut, 1);
+			else console.warn(`Outgoing edge from ${from.toString()} to ${to.toString()} not found.`);
+
+			if (indexIn > -1) toNode.incoming.splice(indexIn, 1);
+			else console.warn(`Incoming edge from ${from.toString()} to ${to.toString()} not found.`);
+		} else if (arg1["from"] !== undefined && arg1["to"] !== undefined && arg1["id"] !== undefined) {
 			const edge = arg1 as GraphEdge<TEdge>;
 			const from = edge.from;
 			const to = edge.to;
 
 			const fromNode = this.nodes.get(from);
 			const toNode = this.nodes.get(to);
-			if (fromNode === undefined || toNode === undefined) {
+
+			if (!fromNode || !toNode) {
+				console.warn(`One or both nodes are missing: from ${from.toString()}, to ${to.toString()}`);
 				return this;
 			}
 
 			const indexOut = fromNode.outgoing.findIndex((e) => e.to === to && e.id === edge.id);
 			const indexIn = toNode.incoming.findIndex((e) => e.from === from && e.id === edge.id);
 
-			if (indexOut != -1) fromNode.outgoing.splice(indexOut, 1);
-			if (indexIn != -1) toNode.incoming.splice(indexIn, 1);
+			if (indexOut > -1) fromNode.outgoing.splice(indexOut, 1);
+			else console.warn(`Outgoing edge from ${from.toString()} to ${to.toString()} with id ${edge.id} not found.`);
+
+			if (indexIn > -1) toNode.incoming.splice(indexIn, 1);
+			else console.warn(`Incoming edge from ${from.toString()} to ${to.toString()} with id ${edge.id} not found.`);
 		}
 		return this;
 	}
@@ -181,12 +198,8 @@ export class Graph<TNode, TEdge>
 	removeNode(id: GraphSymbol) {
 		const node = this.nodes.get(id);
 
-		node.outgoing.forEach((edge) => {
-			this.removeEdge(edge);
-		});
-		node.incoming.forEach((edge) => {
-			this.removeEdge(edge);
-		});
+		for (const edge of [...node.outgoing]) this.removeEdge(edge);
+		for (const edge of [...node.incoming]) this.removeEdge(edge);
 
 		this.nodes.delete(id);
 		return this;
