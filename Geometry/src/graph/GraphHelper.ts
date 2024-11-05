@@ -92,33 +92,34 @@ export namespace GraphHelper {
 			.concat(node.outgoing.map((e) => e.to))
 			.filter((e, i, a) => a.indexOf(e) === i);
 	}
+	export function GetNeighborsAndEdges<t1, t2>(node: GraphNode<t1, t2>) {
+		return node.incoming
+			.map<[t2, GraphSymbol]>((e) => [e.data, e.from])
+			.concat(node.outgoing.map<[t2, GraphSymbol]>((e) => [e.data, e.to]))
+	}
 	export function GetAllEdges<t1, t2>(node: GraphNode<t1, t2>) {
 		return node.incoming.concat(node.outgoing);
 	}
-	export function CalculateShortestEdgeDistance(
-		graph: Graph<any, any>,
-		initial: GraphSymbol
-	): Map<GraphSymbol, number> {
+	export function CalculateShortestEdgeDistance(graph: Graph<any, any>, initial: GraphSymbol): Map<GraphSymbol, number> {
 		const distances = new Map<GraphSymbol, number>();
 		const queue: GraphSymbol[] = [initial];
-		
+
 		// Initialize all nodes with a distance of Infinity, except for the initial node
 		for (const node of graph.keys()) {
 			distances.set(node, Infinity);
 		}
-		distances.set(initial, 0);  // Distance to the initial node is 0
-		
+		distances.set(initial, 0); // Distance to the initial node is 0
+
 		// Perform a breadth-first search (BFS)
 		while (queue.length > 0) {
 			const current = queue.shift()!;
 			const currentDistance = distances.get(current)!;
-	
+
 			const currentNode = graph.get(current);
-			if (!currentNode) continue;  // If the node doesn't exist, skip
-			
+			if (!currentNode) continue; // If the node doesn't exist, skip
+
 			// Check all outgoing edges
 			for (const neighbor of GetNeighbors(currentNode)) {
-	
 				// If a shorter path is found, update the distance and add to queue
 				if (distances.get(neighbor)! > currentDistance + 1) {
 					distances.set(neighbor, currentDistance + 1);
@@ -126,7 +127,7 @@ export namespace GraphHelper {
 				}
 			}
 		}
-	
+
 		return distances;
 	}
 }

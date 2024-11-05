@@ -143,74 +143,11 @@ export namespace GraphLayout {
 		return result.lastState.positions;
 	}
 
-	// Evaluate edge crossing between two edges
-	function EvaluateEdgeCrossing(edge1, edge2) {
-		if (edge1[0] < edge2[0] && edge1[1] > edge2[1]) {
-			return true;
-		} else if (edge1[0] > edge2[0] && edge1[1] < edge2[1]) {
-			return true;
-		}
-		return false;
-	}
-	// Heuristic to minimize edge crossings within each rank
-	function MinimizeEdgeCrossings(rankGroup: [GraphSymbol, number][]) {
-		// THIS CODE WAS WRITTEN BY CHAT GPT, PLEASE BEWARE
-		let hasImproved = true;
-		const maxIterations = 10; // Maximum number of times to repeat the process
-		let iterations = 0;
-
-		while (hasImproved && iterations < maxIterations) {
-			hasImproved = false;
-			iterations++;
-
-			for (let i = 0; i < rankGroup.length - 1; i++) {
-				const currentNode = rankGroup[i];
-				const nextNode = rankGroup[i + 1];
-
-				// Count current crossings
-				let currentCrossings = 0;
-				for (let j = 0; j < rankGroup.length; j++) {
-					if (j !== i && j !== i + 1) {
-						const otherNode = rankGroup[j];
-						if (EvaluateEdgeCrossing([i, currentNode[1]], [j, otherNode[1]])) {
-							currentCrossings++;
-						}
-						if (EvaluateEdgeCrossing([i + 1, nextNode[1]], [j, otherNode[1]])) {
-							currentCrossings++;
-						}
-					}
-				}
-
-				// Swap nodes and evaluate new crossings
-				[rankGroup[i], rankGroup[i + 1]] = [rankGroup[i + 1], rankGroup[i]];
-				let newCrossings = 0;
-				for (let j = 0; j < rankGroup.length; j++) {
-					if (j !== i && j !== i + 1) {
-						const otherNode = rankGroup[j];
-						if (EvaluateEdgeCrossing([i, rankGroup[i][1]], [j, otherNode[1]])) {
-							newCrossings++;
-						}
-						if (EvaluateEdgeCrossing([i + 1, rankGroup[i + 1][1]], [j, otherNode[1]])) {
-							newCrossings++;
-						}
-					}
-				}
-
-				// If the new arrangement reduces crossings, keep it; otherwise, revert
-				if (newCrossings < currentCrossings) {
-					hasImproved = true;
-				} else {
-					// Revert the swap
-					[rankGroup[i], rankGroup[i + 1]] = [rankGroup[i + 1], rankGroup[i]];
-				}
-			}
-		}
-	}
-
 	export function Ranked(
 		graph: Graph<any, any>,
 		stepSize: number,
-		placementMode?: "middle" | "low_middle_bias"
+		placementMode?: "middle" | "low_middle_bias",
+		initial?: GraphSymbol
 	): Map<GraphSymbol, Vector> {
 		// https://crinkles.dev/writing/auto-graph-layout-algorithm
 		const result = new Map<GraphSymbol, Vector>();
@@ -218,7 +155,8 @@ export namespace GraphLayout {
 		// Choose initial node
 		const nodes = [...graph.values()];
 		// Rank nodes (shortest distance (in n number of edges to initial node) length)
-		const distanceMap = GraphHelper.CalculateShortestEdgeDistance(graph, nodes[0].id);
+		initial ??= nodes[0].id;
+		const distanceMap = GraphHelper.CalculateShortestEdgeDistance(graph, initial);
 		const rankGroups: [GraphSymbol, number][][] = [];
 		for (const node of nodes) {
 			const rank = distanceMap.get(node.id);
@@ -227,9 +165,52 @@ export namespace GraphLayout {
 		}
 		// Sort nodes in each rank, to minimize edge crossings
 
-		for (const group of rankGroups.values()) {
-			SortGreatestToCenter(group); // Sort it so the one with the most connections is at the center for aesthetics
-			MinimizeEdgeCrossings(group);
+		for (const [rank, group] of rankGroups.entries()) {
+			SortGreatestToCenter(group, true); // Sort it so the one with the most connections is at the center for aesthetics
+
+			const prevGroup = rankGroups[rank - 1];
+			// Calculate edge crossing heuristic
+			const ECHeuristic = () => {
+				let total = 0;
+
+				// Count how many are not next to each other in the same rank
+				group.forEach((selfE, selfI) => {
+					const selfNode = graph.get(selfE[0]);
+					const neighs = GraphHelper.GetNeighbors(selfNode);
+					group.forEach((otherE, otherI) => {
+						if (selfI === otherI) return;
+						if (neighs.some((n) => n === otherE[0])) return; // child exists in group
+						total += Math.abs(selfI - otherI) - 1; // If they're not next to each other then increase score
+					});
+				});
+
+				if (prevGroup == undefined) return total;
+
+				group.forEach((selfE, selfI) => {
+					const selfNode = graph.get(selfE[0]);
+					const neighs = GraphHelper.GetNeighbors(selfNode);
+					prevGroup.forEach((otherE, otherI) => {
+						if (neighs.some((n) => n === otherE[0])) return; // child exists in group
+						total -= Math.abs(selfI / group.length - otherI / prevGroup.length); // If they're not next to each other then increase score
+					});
+				});
+
+				return total;
+			};
+			// Flip elements, keep variations that improve heuristic
+
+			for (let itter = 0; itter < 15; itter++) {
+				let prevScore = ECHeuristic();
+				for (let g = 0; g < group.length - 1; g++) {
+					SwapElements(group, g, g + 1);
+
+					const newScore = ECHeuristic();
+					if (prevScore < newScore) {
+						// If it's worse then reverse the change
+						SwapElements(group, g, g + 1);
+					} else prevScore = newScore; // If new score is smaller
+				}
+			}
 		}
 
 		placementMode ??= "middle";

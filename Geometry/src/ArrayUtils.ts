@@ -42,10 +42,12 @@ export function ArrayEquals<T>(arrayA: T[], arrayB: T[]) {
  * Modifies the array in place.
  * @param array
  */
-export function SortGreatestToCenter<T>(array: [T, number][]) {
+export function SortGreatestToCenter<T>(array: [T, number][], flip?: boolean) {
+	flip ??= false;
+
 	const sorted = array.splice(0).sort((a, b) => b[1] - a[1]);
 
-	let flag: boolean = false;
+	let flag: boolean = flip;
 	
 	for (const element of sorted) {
 		if (flag) array.push(element);
