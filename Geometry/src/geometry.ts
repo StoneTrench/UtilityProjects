@@ -4,6 +4,7 @@ export * from "./ArrayUtils";
 export * from "./GenerateUUID";
 export * from "./Segment";
 export * from "./BoundingBox";
+export * from "./EnumClass";
 
 export * from "./Polygon";
 
