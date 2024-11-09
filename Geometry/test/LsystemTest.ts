@@ -1,10 +1,6 @@
 import { readFileSync, writeFileSync } from "fs";
-import { LSystem } from "../src/constraints/LSystem";
-import { Graph } from "../src/graph/Graph";
-import { TNodeGraphML, TEdgeGraphML } from "../src/graph/GraphTypes";
-import { MatrixMultiplyVector3x3, Create3DRotationMatrix3x3 } from "../src/math/SimpleMatrix";
-import { Vector } from "../src/math/Vector";
-import { MConst } from "../src/MathUtils";
+import { LSystem, Graph, TNodeGraphML, TEdgeGraphML, Vector, MatrixMultiplyVector3x3, Create3DRotationMatrix3x3, MConst } from "../src/geometry";
+
 
 export function TestLSystem() {
 	console.log("Started LSystem Test");

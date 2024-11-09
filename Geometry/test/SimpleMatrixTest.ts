@@ -1,12 +1,5 @@
-import {
-	CreateTransformMatrix4x4,
-	InvertMatrix4x4,
-	MatrixMultiplyVector4x4,
-	MultiplyMatrix4x4,
-	PrintMatrix4x4,
-} from "../src/math/SimpleMatrix";
-import { Vector } from "../src/math/Vector";
-import { MConst } from "../src/MathUtils";
+import { CreateTransformMatrix4x4, MConst, InvertMatrix4x4, PrintMatrix4x4, Vector, MatrixMultiplyVector4x4, MatrixMultiplyMatrix4x4 } from "../src/geometry";
+
 
 export function TestSimpleMatrix() {
 	function assert(condition: boolean, message: string) {
@@ -16,7 +9,7 @@ export function TestSimpleMatrix() {
 
 	const mat = CreateTransformMatrix4x4(7, 5, 100, MConst.rad30);
 	const inverse = InvertMatrix4x4(mat);
-	const res = MultiplyMatrix4x4(mat, inverse);
+	const res = MatrixMultiplyMatrix4x4(mat, inverse);
 	console.log("Matrix (A):");
 	PrintMatrix4x4(mat);
 	console.log("Inverse (B):");

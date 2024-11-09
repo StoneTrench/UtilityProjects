@@ -1,8 +1,6 @@
-import { GOAP } from "../geometry";
-import { HashVector } from "../grid/Grid";
-import { Vector } from "../math/Vector";
-import { Polygon } from "../Polygon";
-import { Graph, GraphEdge, GraphNode, GraphSymbol } from "./Graph";
+import { Vector, HashVector, Polygon } from "../geometry";
+import { Graph, GraphSymbol, GraphEdge, GraphNode } from "./Graph";
+
 
 export namespace GraphHelper {
 	export function GraphFromSegments(segments: [Vector, Vector][], error: number = 0.05) {

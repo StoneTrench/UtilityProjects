@@ -5,15 +5,15 @@ import {
 	IArrayLikeMapping,
 	MapFunction,
 	SHOULD_BREAK,
-} from "../IArrayFunctions";
-import { Vector } from "../math/Vector";
-import { Color } from "./Color";
+	Vector,
+	Color,
+} from "../geometry";
 
 export type Bitmap = {
 	width: number;
 	height: number;
 	data: Buffer;
-}
+};
 
 export class Image implements IArrayLikeMapping<Color, Vector> {
 	private pixels: { [hash: number]: Color };
@@ -51,7 +51,7 @@ export class Image implements IArrayLikeMapping<Color, Vector> {
 		return this.pixels[index.hash()];
 	}
 	set(index: Vector, value: Color): this {
-		index = index.cloneWithDimensions(2)
+		index = index.cloneWithDimensions(2);
 		this.pixels[index.hash()] = value;
 		return this;
 	}
@@ -60,7 +60,7 @@ export class Image implements IArrayLikeMapping<Color, Vector> {
 		return this.size.clone();
 	}
 
-	static async fromBitmap(bitmap: Bitmap){
+	static async fromBitmap(bitmap: Bitmap) {
 		const image = new Image(bitmap.width, bitmap.height);
 		for (let y = 0; y < bitmap.height; y++) {
 			for (let x = 0; x < bitmap.width; x++) {

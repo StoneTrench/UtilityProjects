@@ -1,16 +1,5 @@
-import {
-	BreakPredicateFunction,
-	ForEachFunction,
-	IArrayLike,
-	IArrayLikeFiltering,
-	IArrayLikeHelper,
-	IArrayLikeMapping,
-	IArrayLikeSearch,
-	MapFunction,
-	PredicateFunction,
-	ReduceFunction,
-	SHOULD_BREAK,
-} from "../IArrayFunctions";
+import { IArrayLikeSearch, IArrayLikeMapping, IArrayLikeFiltering, ReduceFunction, IArrayLikeHelper, PredicateFunction, IArrayLike, MapFunction, ForEachFunction, BreakPredicateFunction, SHOULD_BREAK } from "../geometry";
+
 
 export type TreeMapValue<K, V> = TreeMap<K, V> | V;
 

@@ -1,7 +1,4 @@
-import { GenerateTimestampID } from "../GenerateUUID";
-import { Graph } from "../graph/Graph";
-import { TNodeGraphML, TEdgeGraphML } from "../graph/Graph";
-import { Vector } from "../math/Vector";
+import { Graph, TNodeGraphML, TEdgeGraphML, Vector, GenerateTimestampID } from "../geometry";
 
 /**
  * [Lindenmayer system](https://en.wikipedia.org/wiki/L-system)
@@ -13,7 +10,7 @@ export namespace LSystem {
 		OPEN_SQUARE_BRACKET: "[",
 		CLOSED_SQUARE_BRACKET: "]",
 		OPEN_BRACKET: "(",
-		CLOSED_BRACKET: ")"
+		CLOSED_BRACKET: ")",
 	} as const;
 	enum PARSING_TYPE {
 		DEFAULT,
@@ -61,8 +58,8 @@ export namespace LSystem {
 		return result;
 	}
 	/**
-	 * Converts a string into a graph structure. The function parses bracketed sections within the string 
-	 * and constructs a directed graph using nodes and edges based on the parsing type. 
+	 * Converts a string into a graph structure. The function parses bracketed sections within the string
+	 * and constructs a directed graph using nodes and edges based on the parsing type.
 	 * Square brackets are treated as grouping elements, and characters outside of brackets are added as labeled nodes.
 	 *
 	 * @param {string} str - The string to convert into a graph. It may contain nested brackets.
@@ -114,10 +111,10 @@ export namespace LSystem {
 	 *
 	 * @param {string} str - The input string to parse, which may include commands for movement and stack operations.
 	 * @param {Vector} startingDirection - The initial direction of the virtual "turtle" in space.
-	 * @param {(pos: Vector, dir: Vector, symbol: char, args: number[], id: number) => [Vector, Vector] | undefined} callback - 
-	 * A callback function invoked for each symbol in the string. It receives the current position, direction, symbol, parsed arguments, and state ID. 
+	 * @param {(pos: Vector, dir: Vector, symbol: char, args: number[], id: number) => [Vector, Vector] | undefined} callback -
+	 * A callback function invoked for each symbol in the string. It receives the current position, direction, symbol, parsed arguments, and state ID.
 	 * Returns the new position and direction or `undefined` to skip the symbol.
-	 * @param {(source: Vector, target: Vector, sourceId: number, targetId: number) => void} lineCallback - 
+	 * @param {(source: Vector, target: Vector, sourceId: number, targetId: number) => void} lineCallback -
 	 * A callback function invoked when a line is generated between two states. It receives the source and target positions, along with their respective state IDs.
 	 */
 	export function ParseString(

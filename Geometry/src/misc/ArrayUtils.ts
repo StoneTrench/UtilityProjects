@@ -1,4 +1,5 @@
-import { WrapIndex } from "./math/MathUtils";
+import { WrapIndex } from "../geometry";
+
 
 /**
  * Retrieves an element from an array using a potentially out-of-bounds index by wrapping it.

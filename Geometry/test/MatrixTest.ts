@@ -1,4 +1,5 @@
-import { AdvancedMatrix } from "../src/math/AdvancedMatrix";
+import { AdvancedMatrix } from "../src/geometry";
+
 
 export function TestMatrix() {
 	function assert(condition: boolean, message: string) {

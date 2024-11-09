@@ -1,12 +1,6 @@
-import {
-	BreakPredicateFunction,
-	ForEachFunction,
-	IArrayLikeHelper,
-	IArrayLikeMapping,
-	MapFunction,
-	SHOULD_BREAK,
-} from "../IArrayFunctions";
+import { IArrayLikeMapping, MapFunction, IArrayLikeHelper, ForEachFunction, BreakPredicateFunction, SHOULD_BREAK } from "../geometry";
 import { Vector } from "./Vector";
+
 
 export class TensorGrid<T> implements IArrayLikeMapping<T, Vector> {
 	private values: { [hash: string | number | symbol]: T };

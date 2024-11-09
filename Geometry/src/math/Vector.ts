@@ -1,13 +1,6 @@
-import {
-	IArrayLikeMapping,
-	MapFunction,
-	IArrayLikeHelper,
-	ForEachFunction,
-	BreakPredicateFunction,
-	SHOULD_BREAK,
-} from "../IArrayFunctions";
-import { MConst, WrapIndex } from "./MathUtils";
+import { IArrayLikeMapping, MapFunction, IArrayLikeHelper, ForEachFunction, BreakPredicateFunction, SHOULD_BREAK } from "../geometry";
 import { AdvancedMatrix } from "./AdvancedMatrix";
+import { WrapIndex, MConst } from "./MathUtils";
 
 export type Axes = "x" | "y" | "z" | "w";
 

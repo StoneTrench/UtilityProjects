@@ -1,6 +1,5 @@
-import { IArrayLikeSearch, IArrayLikeDelete, SHOULD_BREAK, IArrayLikeHelper, IArrayLikeMapping } from "../IArrayFunctions";
-import { WrapVector } from "../math/MathUtils";
-import { Axes, Vector } from "../math/Vector";
+import { Vector, IArrayLikeMapping, IArrayLikeSearch, IArrayLikeDelete, Axes, WrapVector, SHOULD_BREAK, IArrayLikeHelper } from "../geometry";
+
 
 /**
  * Generates a unique hash string for a given 3D vector.

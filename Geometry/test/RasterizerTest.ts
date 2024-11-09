@@ -1,8 +1,5 @@
-import { Grid } from "../src/grid/Grid";
-import { Vector } from "../src/math/Vector";
-import { Bezier } from "../src/rasterization/Bezier";
-import { Bresenham } from "../src/rasterization/Bresenham";
-import { SubdivisionRasterize } from "../src/rasterization/SubdivisionRasterize";
+import { Grid, Vector, SubdivisionRasterize, Bezier, Bresenham } from "../src/geometry";
+
 
 export function TestRasterizer() {
 	console.log("Starting Rasterizer Test!");

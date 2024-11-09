@@ -1,12 +1,12 @@
-export * from "./IArrayFunctions";
+export * from "./misc/IArrayFunctions";
 export * from "./math/MathUtils";
-export * from "./ArrayUtils";
-export * from "./GenerateUUID";
-export * from "./Segment";
-export * from "./BoundingBox";
-export * from "./EnumClass";
+export * from "./misc/ArrayUtils";
+export * from "./misc/GenerateUUID";
+export * from "./misc/Segment";
+export * from "./misc/BoundingBox";
+export * from "./misc/EnumClass";
 
-export * from "./Polygon";
+export * from "./misc/Polygon";
 
 export * from "./grid/Grid";
 export * from "./grid/GridHelper";

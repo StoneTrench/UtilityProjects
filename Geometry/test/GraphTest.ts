@@ -1,7 +1,5 @@
 import test, { TestContext } from "node:test";
-import { Graph } from "../src/graph/Graph";
-import { TEdgeGraphML, TNodeGraphML } from "../src/graph/GraphTypes";
-import { SHOULD_BREAK } from "../src/IArrayFunctions";
+import { Graph, TNodeGraphML, TEdgeGraphML, SHOULD_BREAK } from "../src/geometry";
 
 type G = Graph<TNodeGraphML, TEdgeGraphML>;
 

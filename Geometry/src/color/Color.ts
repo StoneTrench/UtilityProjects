@@ -5,7 +5,7 @@ import {
 	ForEachFunction,
 	BreakPredicateFunction,
 	SHOULD_BREAK,
-} from "../IArrayFunctions";
+} from "../geometry";
 
 export type ColorChannels = "r" | "g" | "b" | "a";
 

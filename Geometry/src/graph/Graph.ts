@@ -1,15 +1,15 @@
 import { create } from "xmlbuilder2";
 import {
-	BreakPredicateFunction,
-	ForEachFunction,
 	IArrayLikeFiltering,
-	IArrayLikeHelper,
 	IArrayLikeMapping,
 	MapFunction,
-	PredicateFunction,
+	IArrayLikeHelper,
 	ReduceFunction,
+	PredicateFunction,
+	ForEachFunction,
+	BreakPredicateFunction,
 	SHOULD_BREAK,
-} from "../IArrayFunctions";
+} from "../geometry";
 
 export type GraphSymbol = string | number | symbol;
 
@@ -58,11 +58,11 @@ export class Graph<TNode, TEdge>
 		this.nodes = new Map();
 	}
 
-	values(){
-		return this.nodes.values()
+	values() {
+		return this.nodes.values();
 	}
-	keys(){
-		return this.nodes.keys()
+	keys() {
+		return this.nodes.keys();
 	}
 	//#region Interface
 	mapClone<t>(func: MapFunction<GraphNode<TNode, TEdge>, GraphSymbol, t, this>): Graph<TNode, TEdge> {

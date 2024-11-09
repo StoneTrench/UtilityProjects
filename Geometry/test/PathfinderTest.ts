@@ -1,10 +1,6 @@
 import { writeFileSync } from "fs";
-import { Benchmark, BenchmarkSilent } from "../src/benchmark/Benchmark";
-import { Goals } from "../src/constraints/Goals";
-import { Pathfinder } from "../src/constraints/Pathfinder";
-import { Grid } from "../src/grid/Grid";
-import { Vector } from "../src/math/Vector";
-import { Graph } from "../src/graph/Graph";
+import { Goals, GOAP, Graph, Grid, Vector } from "../src/geometry";
+
 
 export async function TestPathfinderWFC() {
 	console.log("Pathfinder WFC test started!");
@@ -125,7 +121,7 @@ export async function TestPathfinderWFC() {
 	];
 
 	function Generate(goal: Goals.GoalWFC) {
-		const path = Pathfinder.FindPath(goal);
+		const path = GOAP.FindPlan(goal);
 
 		if (path.lastState != undefined) {
 			const debugGrid = new Grid<string>("  ");
