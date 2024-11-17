@@ -45,7 +45,7 @@ export class Grid<T>
 
 	//#region Create
 	/**
-	 * Creates an instance of DynamicGrid3D with a specified default element.
+	 * Creates an instance of Grid with a specified default element.
 	 *
 	 * @param defaultElement - The default element used for uninitialized grid points.
 	 */
@@ -60,12 +60,12 @@ export class Grid<T>
 	}
 
 	/**
-	 * Creates a DynamicGrid3D from a 2D matrix, mapping values to a 3D grid.
+	 * Creates a Grid from a 2D matrix, mapping values to a 3D grid.
 	 *
 	 * @template T - The type of elements in the grid.
 	 * @param values - The 2D matrix of values.
 	 * @param defaultValue - The default value for uninitialized grid points.
-	 * @returns A new DynamicGrid3D instance with the mapped values.
+	 * @returns A new Grid instance with the mapped values.
 	 */
 	static FromMatrix<T>(values: T[][], defaultValue?: T): Grid<T> {
 		return new Grid<T>(defaultValue).forVolume(
@@ -76,11 +76,11 @@ export class Grid<T>
 	}
 
 	/**
-	 * Creates a DynamicGrid3D from an array of strings, mapping each character to a 3D grid.
+	 * Creates a Grid from an array of strings, mapping each character to a 3D grid.
 	 *
 	 * @param values - The array of strings.
 	 * @param defaultValue - The default value for uninitialized grid points.
-	 * @returns A new DynamicGrid3D instance with the mapped values.
+	 * @returns A new Grid instance with the mapped values.
 	 */
 	static FromStringArray(values: string[], defaultValue?: string): Grid<string> {
 		return new Grid<string>(defaultValue).forVolume(
@@ -98,7 +98,7 @@ export class Grid<T>
 	 * @param axisAligned - Whether the neighbors should be axis-aligned.
 	 * @returns An array of vectors representing neighboring positions.
 	 */
-	static GenerateNeighboursMap(axes: Axes[], size: number = 1, axisAligned: boolean = false): Vector[] {
+	static GenerateNeighborsMap(axes: Axes[], size: number = 1, axisAligned: boolean = false): Vector[] {
 		const neighborVectors: Vector[] = [];
 
 		if (axisAligned) {
@@ -334,26 +334,26 @@ export class Grid<T>
 	/**
 	 * Gets the neighboring values around a position based on a lookup table.
 	 * @param {Vector} pos - The position to get neighbors from.
-	 * @param {readonly Vector[]} neighbourLookupTable - The table that defines relative neighbor positions.
+	 * @param {readonly Vector[]} neighborLookupTable - The table that defines relative neighbor positions.
 	 * @returns {T[]} - Returns an array of neighboring values.
 	 */
-	getNeighbours(pos: Vector, neighbourLookupTable: readonly Vector[]) {
-		return neighbourLookupTable.map((e) => this.get(pos.plus(e)));
+	getNeighbors(pos: Vector, neighborLookupTable: readonly Vector[]) {
+		return neighborLookupTable.map((e) => this.get(pos.plus(e)));
 	}
 
 	/**
 	 * Finds the index of a neighbor that matches a predicate.
 	 * @param {Vector} pos - The position to search neighbors from.
 	 * @param {(value: T, pos: Vector, grid: Grid<T>) => boolean} predicate - The function to match a neighbor.
-	 * @param {readonly Vector[]} neighbourLookupTable - The lookup table defining neighbor positions.
+	 * @param {readonly Vector[]} neighborLookupTable - The lookup table defining neighbor positions.
 	 * @returns {number} - Returns the index of the matching neighbor, or -1 if none match.
 	 */
-	findNeighbourIndex(
+	findNeighborIndex(
 		pos: Vector,
 		predicate: (value: T, pos: Vector, grid: Grid<T>) => boolean,
-		neighbourLookupTable: readonly Vector[]
+		neighborLookupTable: readonly Vector[]
 	) {
-		return neighbourLookupTable.findIndex((e) => {
+		return neighborLookupTable.findIndex((e) => {
 			const npos = pos.plus(e);
 			return predicate(this.get(npos)!, npos, this);
 		});

@@ -5,12 +5,13 @@ export * from "./misc/GenerateUUID";
 export * from "./misc/Segment";
 export * from "./misc/BoundingBox";
 export * from "./misc/EnumClass";
+export * from "./misc/Registry";
 
 export * from "./misc/Polygon";
 
 export * from "./grid/Grid";
 export * from "./grid/GridHelper";
-export * from "./grid/Neighbours";
+export * from "./grid/Neighbors";
 
 export * from "./graph/GraphHelper";
 export * from "./graph/GraphLayout";

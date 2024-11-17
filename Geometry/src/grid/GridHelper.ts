@@ -16,10 +16,10 @@ export namespace GridHelper {
 	 * Performs a flood fill from a starting point with a given value, replacing connected matching values.
 	 * @param {Vector} startingPoint - The point to start the flood fill from.
 	 * @param {T} value - The value to fill with.
-	 * @param {readonly Vector[]} neighbourLookupTable - The lookup table defining neighbor positions.
+	 * @param {readonly Vector[]} neighborLookupTable - The lookup table defining neighbor positions.
 	 * @returns {Grid<T>} - Returns the updated grid.
 	 */
-	export function FloodFill<T>(grid: Grid<T>, startingPoint: Vector, value: T, neighbourLookupTable: readonly Vector[]) {
+	export function FloodFill<T>(grid: Grid<T>, startingPoint: Vector, value: T, neighborLookupTable: readonly Vector[]) {
 		const parentValue = grid.get(startingPoint);
 		if (parentValue == value) return grid;
 
@@ -30,7 +30,7 @@ export namespace GridHelper {
 			grid.set(current, value);
 
 			points.push(
-				...neighbourLookupTable
+				...neighborLookupTable
 					.map((e) => current.plus(e))
 					.filter((e) => grid.isInside(e))
 					.filter((e) => grid.get(e) == parentValue)
@@ -43,21 +43,21 @@ export namespace GridHelper {
 	/**
 	 * Calculates the sum of neighboring values around a given position.
 	 * @param {Vector} pos - The position to get neighbors around.
-	 * @param {readonly Vector[]} neighbourLookupTable - The lookup table defining neighbor positions.
+	 * @param {readonly Vector[]} neighborLookupTable - The lookup table defining neighbor positions.
 	 * @returns {number} - The sum of the neighboring values.
 	 */
-	export function GetNeighboursSum(grid: Grid<number>, pos: Vector, neighbourLookupTable: readonly Vector[]): number {
-		return neighbourLookupTable.reduce((res, e) => res + grid.get(pos.plus(e)), 0);
+	export function GetNeighborsSum(grid: Grid<number>, pos: Vector, neighborLookupTable: readonly Vector[]): number {
+		return neighborLookupTable.reduce((res, e) => res + grid.get(pos.plus(e)), 0);
 	}
 
 	/**
 	 * Calculates the mean of neighboring values around a given position.
 	 * @param {Vector} pos - The position to get neighbors around.
-	 * @param {readonly Vector[]} neighbourLookupTable - The lookup table defining neighbor positions.
+	 * @param {readonly Vector[]} neighborLookupTable - The lookup table defining neighbor positions.
 	 * @returns {number} - The mean of the neighboring values.
 	 */
-	export function GetNeighboursMean(grid: Grid<number>, pos: Vector, neighbourLookupTable: readonly Vector[]): number {
-		return GetNeighboursSum(grid, pos, neighbourLookupTable) / neighbourLookupTable.length;
+	export function GetNeighborsMean(grid: Grid<number>, pos: Vector, neighborLookupTable: readonly Vector[]): number {
+		return GetNeighborsSum(grid, pos, neighborLookupTable) / neighborLookupTable.length;
 	}
 
 	/**
@@ -76,17 +76,17 @@ export namespace GridHelper {
 
 	/**
 	 * Calculates the normal vectors for each position in the grid based on neighboring values.
-	 * @param {readonly Vector[]} neighbourLookupTable - The lookup table defining neighbor positions.
+	 * @param {readonly Vector[]} neighborLookupTable - The lookup table defining neighbor positions.
 	 * @returns {Grid<Vector>} - A new grid with normal vectors for each position.
 	 */
-	export function GetNormals(grid: Grid<number>, neighbourLookupTable: readonly Vector[]) {
+	export function GetNormals(grid: Grid<number>, neighborLookupTable: readonly Vector[]) {
 		return grid.mapClone((v, p, g) =>
 			v != 0
 				? grid
-						.getNeighbours(p, neighbourLookupTable)
+						.getNeighbors(p, neighborLookupTable)
 						.map<[number, number]>((e, i) => [e, i])
 						.filter((e) => e[0] != 0)
-						.reduce((res, val) => res.add(neighbourLookupTable[val[1]]), new Vector(0, 0, 0))
+						.reduce((res, val) => res.add(neighborLookupTable[val[1]]), new Vector(0, 0, 0))
 						.unit()
 				: new Vector(0, 0, 0)
 		);
