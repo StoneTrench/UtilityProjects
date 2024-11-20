@@ -159,6 +159,7 @@ fs.readdirSync(libs).forEach((project_name) => {
 			files.push(req_file_path);
 
 			text = text.replace(m[0], `${req_func_name}()`);
+			text = text.split("\r\n").filter(e => !e.trim().startsWith("---@")).join("\r\n")
 		}
 
 		if (loaded_libraries[func_name] === undefined)
@@ -170,7 +171,7 @@ fs.readdirSync(libs).forEach((project_name) => {
 
 	let result = `local ${preload_var_name} = {};\r\n`
 	result += Object.values(loaded_libraries).reverse().join("\r\n");
-	result += `\r\n${START_FUNC_NAME}()`;
+	result += `\r\nreturn ${START_FUNC_NAME}()`;
 
 	const output_file = pJoin(build_dir, project_name + extension).replace(/\\/g, "/");
 	const output_min_file = pJoin(build_dir, project_name + ".min" + extension).replace(/\\/g, "/");
