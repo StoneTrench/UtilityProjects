@@ -47,13 +47,11 @@ echo "
       \"node_modules\", \"dist\"
     ],
 }
-"
+" > "tsconfig.json"
 
 rm -rf "./$CC_TSTL_TEMPLATE_REPO/"
 
 echo
-echo "Linking main.ts to $PROJECT_DIR_NAME_SAFE.ts"
-echo "import \"src/$PROJECT_DIR_NAME_SAFE.ts\"" >> main.ts
 echo "
 node_modules
 *.lua

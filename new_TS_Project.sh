@@ -156,7 +156,7 @@ remove_all_scripts_from_package_json
 
 add_script_to_package_json "test" "npx tsx test/test.ts" 1
 add_script_to_package_json "bundle" "tsc -p tsconfig.prod.json && uglifyjs --compress --mangle --output dist/bundle.min.js -- dist/bundle.js"
-add_script_to_package_json "rein" "rm -rf node_modules && npm install"
+add_script_to_package_json "rein" "rm -rf node_modules && npm --force install"
 
 
 # echo
