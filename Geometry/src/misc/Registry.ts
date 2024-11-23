@@ -1,6 +1,6 @@
 export class Registry<T> {
-	private static registries = new Map<string, Registry<any>>();
-	private elements: Map<string, T>;
+	private static registries: Map<string, Registry<any>> = new Map();
+	private elements: Map<string, T> = new Map();
 
 	constructor(public readonly name: string) {
 		if (Registry.registries.has(name)) throw new Error(`Registry with name "${name}" already exists!`);

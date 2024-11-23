@@ -2,10 +2,19 @@ const fs = require("fs");
 const pJoin = require("path").join;
 const childProcess = require("child_process");
 
-const libs = process.cwd();
+const libs = pJoin(process.cwd(), "_Projects");
 const build = "dist/";
 const extension = ".lua";
-const preload_var_name = "PROJECT_LIBRARIES"
+const preload_var_name = "PROJECT_LIBRARIES";
+const SHOULD_MINIFY = false;
+
+const PRIVATE = (() => {
+	if (fs.existsSync("./private.json")) {
+		const private = JSON.parse(fs.readFileSync("./private.json", "utf-8"));
+		return private;
+	}
+	return undefined;
+})();
 
 /**
  * Relative to project
@@ -69,6 +78,16 @@ function ConvertPathToFunctionName(project_dir, file_path) {
 	return `${preload_var_name}.${code}`;
 }
 
+function CreateRequireOperation(func_name) {
+	return  `(${func_name}_comp or (function () ${func_name}_comp = ${func_name}(); return ${func_name}_comp; end)())` // `${func_name}`;
+}
+function CreateDeclarationOperation(func_name, text) {
+	return `${func_name} = (function () \n${text} \nend)\r\n`;
+}
+function CreateReturnStartup(func_name) {
+	return `return ${func_name}()`;
+}
+
 /**
  *
  * @param {string} project_path
@@ -128,6 +147,8 @@ fs.readdirSync(libs).forEach((project_name) => {
 
 	if (entrypoint == undefined) return;
 
+	console.log(`Found project ${project_name}`);
+
 	const START_FUNC_NAME = ConvertPathToFunctionName(project_dir, entrypoint);
 
 	const files = [entrypoint];
@@ -141,46 +162,65 @@ fs.readdirSync(libs).forEach((project_name) => {
 
 		const func_name = ConvertPathToFunctionName(project_dir, current);
 
+		// if (loaded_libraries[func_name] !== undefined) continue;
+
 		let text = fs.readFileSync(current, "utf-8");
+		text = text
+			.split("\r\n")
+			.filter((e) => !e.trim().startsWith("---@"))
+			.join("\r\n");
 
 		// Loop through requires
 		let previousMatchIndex = 0;
 		while (true) {
-			const m = text.substring(previousMatchIndex).match(/require\(\"(.*?)\"\)/m);
+			const m = text.substring(previousMatchIndex).match(/require(\(|\s)\"(.*?)\"( |\))?/m);
 
 			if (m == undefined) break;
 
-			previousMatchIndex += m.index + m[0].length;
-
-			const req_file_path = FindRequireFile(project_dir, GetParentPath(current), m[1]);
-			if (req_file_path == undefined) continue;
+			const req_file_path = FindRequireFile(project_dir, GetParentPath(current), m[2]);
+			if (req_file_path == undefined) {
+				previousMatchIndex += m.index + m[0].length;
+				continue;
+			}
 			const req_func_name = ConvertPathToFunctionName(project_dir, req_file_path);
+
+			console.log(GetBasename(current), m[0]);
 
 			files.push(req_file_path);
 
-			text = text.replace(m[0], `${req_func_name}()`);
-			text = text.split("\r\n").filter(e => !e.trim().startsWith("---@")).join("\r\n")
+			text = text.replace(m[0], CreateRequireOperation(req_func_name));
 		}
 
-		if (loaded_libraries[func_name] === undefined)
-			loaded_libraries[func_name] = `${func_name} = (function () \n${text} \nend)`;
+		loaded_libraries[func_name] = CreateDeclarationOperation(func_name, text);
 	}
 
 	const build_dir = pJoin(project_dir, build);
 	if (!fs.existsSync(build_dir)) fs.mkdirSync(build_dir);
 
-	let result = `local ${preload_var_name} = {};\r\n`
-	result += Object.values(loaded_libraries).reverse().join("\r\n");
-	result += `\r\nreturn ${START_FUNC_NAME}()`;
+	let result = "";
+	result += `---@diagnostic disable\r\n`;
+	result += `local ${preload_var_name} = {};\r\n`;
+	result += `print(\"Compiled on: ${new Date().toLocaleString()}\");\r\n`;
+	result += Object.values(loaded_libraries).join("\r\n");
+	result += `\r\n${CreateReturnStartup(START_FUNC_NAME)}`;
 
 	const output_file = pJoin(build_dir, project_name + extension).replace(/\\/g, "/");
 	const output_min_file = pJoin(build_dir, project_name + ".min" + extension).replace(/\\/g, "/");
 	fs.writeFileSync(output_file, result, "utf-8");
 
-	childProcess.execSync(`luamin -f ${output_file} > ${output_min_file}`, {
-		encoding: "utf-8",
-		stdio: "inherit",
-	});
+	if (SHOULD_MINIFY) {
+		childProcess.execSync(`luamin -f ${output_file} > ${output_min_file}`, {
+			encoding: "utf-8",
+			stdio: "inherit",
+		});
+	}
+
+	if (PRIVATE) {
+		PRIVATE.computers?.forEach((p) => {
+			fs.copyFileSync(output_file, pJoin(p, project_name + extension));
+		});
+		if (PRIVATE.computer) fs.copyFileSync(output_file, pJoin(PRIVATE.computer, project_name + extension));
+	}
 
 	// fs.rmSync(output_file, { maxRetries: 100 });
 });
